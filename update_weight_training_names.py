@@ -39,7 +39,11 @@ def update_weight_training_activity_names(days, token_dict):
         refresh_token=token_dict["refresh_token"],
         token_expires=token_dict["expires_at"],
     )
-    client.refresh_access_token(client_id=os.environ["STRAVA_CLIENT_ID"], client_secret=os.environ["STRAVA_CLIENT_SECRET"], refresh_token=token_dict["refresh_token"])
+    client.refresh_access_token(
+        client_id=token_dict["STRAVA_CLIENT_ID"],
+        client_secret=token_dict["STRAVA_CLIENT_SECRET"],
+        refresh_token=token_dict["refresh_token"],
+    )
 
     after = (datetime.datetime.now() - datetime.timedelta(days=days)).strftime(
         "%Y-%m-%d"
