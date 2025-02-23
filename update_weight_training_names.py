@@ -39,7 +39,7 @@ def update_weight_training_activity_names(days, token_dict):
         elif weekday in ["Wednesday", "Thursday"]:
             inferred_name = "Leg day"
         elif weekday in ["Friday", "Saturday"]:
-            inferred_name = "Push day"
+            inferred_name = "Push day 💪"
         else:
             inferred_name = "Unknown"
         element = {
@@ -61,6 +61,10 @@ def update_weight_training_activity_names(days, token_dict):
 
 
 if __name__ == "__main__":
-    with open("token.json", "r") as f:
-        token_dict = load(f)
+    # with open("token.json", "r") as f:
+    #     token_dict = load(f)
+    import json
+    from dotenv import load_dotenv
+    load_dotenv(override=True)
+    token_dict = json.loads(os.environ["STRAVA_TOKEN"])
     update_weight_training_activity_names(days=30, token_dict=token_dict)
