@@ -5,6 +5,18 @@ import os
 from stravalib.model import RelaxedSportType
 from pushbullet import Pushbullet
 
+def authenticate(token_dict):
+    client = Client(
+        access_token=token_dict["access_token"],
+        refresh_token=token_dict["refresh_token"],
+        token_expires=token_dict["expires_at"],
+    )
+    client.refresh_access_token(
+        client_id=token_dict["STRAVA_CLIENT_ID"],
+        client_secret=token_dict["STRAVA_CLIENT_SECRET"],
+        refresh_token=token_dict["refresh_token"],
+    )
+    return client
 
 def update_weight_training_activity_names(days, token_dict):
     """Updates the names of weight training activities on Strava based on the day of the week.
@@ -34,16 +46,7 @@ def update_weight_training_activity_names(days, token_dict):
         It then updates the activity name on Strava and sends a push notification using Pushbullet
         to confirm the update.  It only updates activities whose names contain "Weight Training".
     """
-    client = Client(
-        access_token=token_dict["access_token"],
-        refresh_token=token_dict["refresh_token"],
-        token_expires=token_dict["expires_at"],
-    )
-    client.refresh_access_token(
-        client_id=token_dict["STRAVA_CLIENT_ID"],
-        client_secret=token_dict["STRAVA_CLIENT_SECRET"],
-        refresh_token=token_dict["refresh_token"],
-    )
+    client=authenticate(token_dict)
 
     after = (datetime.datetime.now() - datetime.timedelta(days=days)).strftime(
         "%Y-%m-%d"
