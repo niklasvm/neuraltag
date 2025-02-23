@@ -5,6 +5,7 @@ import re
 from stravalib.client import Client
 import os
 from stravalib.model import RelaxedSportType
+from pushbullet import Pushbullet
 
 
 def update_weight_training_activity_names(days, token_dict):
@@ -55,9 +56,15 @@ def update_weight_training_activity_names(days, token_dict):
 
     print(f"Found {len(results)} activities to rename")
 
+    pb = Pushbullet(os.environ["PUSHBULLET_API_KEY"])
+
     for result in results:
         print(f"Renaming {result['id']} to {result['inferred_name']}")
         client.update_activity(activity_id=result["id"], name=result["inferred_name"])
+        push = pb.push_note(
+            "Strava Activity Renamed",
+            f"Activity {result['id']} renamed to {result['inferred_name']}",
+        )
 
 
 if __name__ == "__main__":

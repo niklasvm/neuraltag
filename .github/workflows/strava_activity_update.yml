@@ -29,3 +29,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STRAVA_TOKEN: ${{ secrets.STRAVA_TOKEN }}
+          PUSHBULLET_API_KEY: ${{ secrets.PUSHBULLET_API_KEY }}
