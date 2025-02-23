@@ -1,6 +1,4 @@
-from pprint import pp
 import datetime
-from json import load
 import re
 from stravalib.client import Client
 import os
@@ -9,6 +7,33 @@ from pushbullet import Pushbullet
 
 
 def update_weight_training_activity_names(days, token_dict):
+    """Updates the names of weight training activities on Strava based on the day of the week.
+
+    Args:
+        days (int): The number of days back to check for activities.
+        token_dict (dict): A dictionary containing the Strava API access token, refresh token, and expiration time.
+            The dictionary should have the following keys:
+                - "access_token" (str): The Strava API access token.
+                - "refresh_token" (str): The Strava API refresh token.
+                - "expires_at" (int): The expiration time of the access token as a Unix timestamp.
+
+    Returns:
+        None: This function does not return any value. It updates the activity names directly on Strava
+              and sends push notifications via Pushbullet.
+
+    Raises:
+        Exception: If there are issues connecting to the Strava API or Pushbullet.
+
+    Details:
+        The function retrieves weight training activities from Strava within the specified number of days.
+        It infers a new name for each activity based on the day of the week the activity occurred:
+            - Monday/Tuesday: "Pull day"
+            - Wednesday/Thursday: "Leg day"
+            - Friday/Saturday: "Push day 💪"
+            - Sunday: "Unknown"
+        It then updates the activity name on Strava and sends a push notification using Pushbullet
+        to confirm the update.  It only updates activities whose names contain "Weight Training".
+    """
     client = Client(
         access_token=token_dict["access_token"],
         refresh_token=token_dict["refresh_token"],
@@ -61,7 +86,7 @@ def update_weight_training_activity_names(days, token_dict):
     for result in results:
         print(f"Renaming {result['id']} to {result['inferred_name']}")
         client.update_activity(activity_id=result["id"], name=result["inferred_name"])
-        push = pb.push_note(
+        pb.push_note(
             "Strava Activity Renamed",
             f"Activity {result['id']} renamed to {result['inferred_name']}",
         )
@@ -72,6 +97,7 @@ if __name__ == "__main__":
     #     token_dict = load(f)
     import json
     from dotenv import load_dotenv
+
     load_dotenv(override=True)
     token_dict = json.loads(os.environ["STRAVA_TOKEN"])
     update_weight_training_activity_names(days=30, token_dict=token_dict)
