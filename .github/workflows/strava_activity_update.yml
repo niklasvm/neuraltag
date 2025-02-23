@@ -28,3 +28,4 @@ jobs:
         run: python update_weight_training_names.py
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STRAVA_TOKEN: ${{ secrets.STRAVA_TOKEN }}
