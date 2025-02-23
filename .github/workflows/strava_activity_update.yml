@@ -1,0 +1,29 @@
+name: Update Strava Activity Names
+
+on:
+#   schedule:
+#     # Runs every hour between 8am and 6pm UTC (9am and 7pm CEST)
+#     - cron: '0 6-16 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  run_script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r pyproject.toml
+
+      - name: Run script
+        run: python /Users/niklasvonmaltzahn/Documents/personal/strava/update_weight_training_names.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
