@@ -105,5 +105,6 @@ if __name__ == "__main__":
 
     load_dotenv(override=True)
     token_dict = json.loads(os.environ["STRAVA_TOKEN"])
-    os.environ.update(token_dict)
+    os.environ["STRAVA_CLIENT_ID"] = token_dict["STRAVA_CLIENT_ID"]
+    os.environ["STRAVA_CLIENT_SECRET"] = token_dict["STRAVA_CLIENT_SECRET"]
     update_weight_training_activity_names(days=1, token_dict=token_dict)
