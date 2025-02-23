@@ -39,6 +39,7 @@ def update_weight_training_activity_names(days, token_dict):
         refresh_token=token_dict["refresh_token"],
         token_expires=token_dict["expires_at"],
     )
+    # client.refresh_access_token(client_id=os.environ["STRAVA_CLIENT_ID"], client_secret=os.environ["STRAVA_CLIENT_SECRET"], refresh_token=token_dict["refresh_token"])
 
     after = (datetime.datetime.now() - datetime.timedelta(days=days)).strftime(
         "%Y-%m-%d"
@@ -100,4 +101,4 @@ if __name__ == "__main__":
 
     load_dotenv(override=True)
     token_dict = json.loads(os.environ["STRAVA_TOKEN"])
-    update_weight_training_activity_names(days=30, token_dict=token_dict)
+    update_weight_training_activity_names(days=1, token_dict=token_dict)
