@@ -22,7 +22,7 @@ jobs:
           uv pip install . --system
       
       - name: Run lint tests
-        run: make lint_tests
+        run: ruff check src tests
       
       - name: Run unit tests
         run: make unit_tests
