@@ -8,6 +8,14 @@ import src.naming
 
 
 class TestNaming(unittest.TestCase):
+    @patch.dict(
+        src.naming.os.environ,
+        {
+            "STRAVA_TOKEN": '{"access_token": ""}',
+            "GEMINI_API_KEY": "",
+            "PUSHBULLET_API_KEY": "",
+        },
+    )
     @patch.object(src.naming, "Pushbullet")
     @patch.object(src.naming, "generate_activity_name_with_gemini")
     @patch.object(src.naming, "extract_data_from_weight_training_activities")
