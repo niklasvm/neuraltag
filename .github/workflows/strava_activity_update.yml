@@ -32,4 +32,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STRAVA_TOKEN: ${{ secrets.STRAVA_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PUSHBULLET_API_KEY: ${{ secrets.PUSHBULLET_API_KEY }}
