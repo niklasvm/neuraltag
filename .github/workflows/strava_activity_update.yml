@@ -41,8 +41,8 @@ jobs:
       
       - name: Push changes
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          git config --local user.email "niklasvm@gmail.com"
+          git config --local user.name "niklasvm"
           git commit -am "Automated update by GitHub Actions[skip ci]"
           git remote set-url origin https://x-access-token:${{ secrets.WRITE_PAT }}@github.com/niklasvm/strava.git
           git push origin ${{ github.ref_name }}
