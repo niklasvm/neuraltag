@@ -37,17 +37,3 @@ jobs:
           STRAVA_TOKEN: ${{ secrets.STRAVA_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PUSHBULLET_API_KEY: ${{ secrets.PUSHBULLET_API_KEY }}
-
-      
-      - name: Push changes
-        run: |
-          git config --local user.email "niklasvm@gmail.com"
-          git config --local user.name "niklasvm"
-          git commit -am "Automated update by GitHub Actions[skip ci]"
-          git remote set-url origin https://x-access-token:${WRITER_GITHUB_PAT}@github.com/niklasvm/strava.git
-          git push origin master
-
-        env:
-          WRITER_GITHUB_PAT: ${{ secrets.WRITER_GITHUB_PAT }}
-
-          
