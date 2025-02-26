@@ -12,6 +12,7 @@ on:
 jobs:
   run_script:
     runs-on: ubuntu-latest
+    if: !contains(github.event.head_commit.message, '[skip ci]')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,3 +35,11 @@ jobs:
           STRAVA_TOKEN: ${{ secrets.STRAVA_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PUSHBULLET_API_KEY: ${{ secrets.PUSHBULLET_API_KEY }}
+
+      - name: Commit and push if changes
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email ''
+          git add .
+          git diff-index --quiet HEAD || git commit -m "Update activity names [skip ci]"
+          git push
