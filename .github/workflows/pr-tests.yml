@@ -23,7 +23,9 @@ jobs:
           uv sync
       
       - name: Run lint tests
-        run: ruff check src tests
+        run: |
+            echo "${PWD}"
+            ruff check src tests
       
       - name: Run unit tests
         run: make unit_tests
