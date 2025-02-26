@@ -12,7 +12,6 @@ on:
 jobs:
   run_script:
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
