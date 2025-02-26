@@ -44,9 +44,11 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git commit -am "Automated update by GitHub Actions"
-          git remote set-url --push origin https://git:$GITHUB_TOKEN@github.com/niklasvm/strava
+          git remote set-url --push origin https://git:$WRITE_PAT@github.com/niklasvm/strava
           git push
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WRITE_PAT: ${{ secrets.WRITE_PAT }}
+
           
