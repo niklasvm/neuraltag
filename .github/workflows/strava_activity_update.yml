@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,10 +38,15 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PUSHBULLET_API_KEY: ${{ secrets.PUSHBULLET_API_KEY }}
 
-      - name: Commit and push if changes
+      
+      - name: Push changes
         run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email ''
-          git add .
-          git diff-index --quiet HEAD || git commit -m "Update activity names [skip ci]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -am "Automated update by GitHub Actions"
+          git remote set-url --push origin https://git:$GITHUB_TOKEN@github.com/niklasvm/strava
           git push
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
