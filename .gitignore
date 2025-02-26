@@ -168,5 +168,7 @@ cython_debug/
 #.idea/
 
 # PyPI configuration file
+.DS_Store
 .pypirc
 token.json
+data/
