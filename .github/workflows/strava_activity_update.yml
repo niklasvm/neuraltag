@@ -44,10 +44,10 @@ jobs:
           git config --local user.email "niklasvm@gmail.com"
           git config --local user.name "niklasvm"
           git commit -am "Automated update by GitHub Actions[skip ci]"
-          git remote set-url --push origin https://niklasvm:$GITHUB_TOKEN@github.com/niklasvm/strava
+          git remote set-url --push origin https://niklasvm:$WRITE_PAT@github.com/niklasvm/strava
           git push origin HEAD:master
 
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WRITE_PAT: ${{ secrets.WRITE_PAT }}
 
           
