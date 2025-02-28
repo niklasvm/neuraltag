@@ -38,10 +38,6 @@ def name_all_activities(days: int = 365):
             body=f"Options:\n{options}",
         )
 
-        # append to README
-        with open("README.md", "a") as f:
-            f.write(f"{id}: {best_name}\n")
-
 
 def name_run_activities(activities: list):
     run_regex = r"(Morning|Afternoon|Evening|Night)\sRun"
@@ -90,7 +86,3 @@ def name_weight_training_activities(activities: list):
 
 if __name__ == "__main__":
     name_all_activities(days=365)
-    
-    # test
-    with open("README.md", "a") as f:
-        f.write("hello world")
