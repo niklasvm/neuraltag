@@ -2,10 +2,13 @@ FROM python:3.10-slim-buster
 
 WORKDIR /app
 
-RUN pip install uv
+RUN pip install --upgrade pip && \
+    pip install uv
 COPY pyproject.toml .
 COPY uv.lock .
-RUN uv pip install -v .
+
+# install
+RUN uv pip install --system --no-cache-dir .
 
 COPY . .
 
