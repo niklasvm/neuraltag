@@ -12,11 +12,8 @@ unit_tests:
 	coverage report -m
 
 
-docker-build:
-	docker build . -t ghcr.io/niklasvm/strava:latest
-
 docker-run:
-	docker run -it --rm ghcr.io/niklasvm/strava:latest
+	docker-compose run strava
 
 docker-bash:
-	docker run -it --rm ghcr.io/niklasvm/strava:latest bash
+	docker-compose run strava bash

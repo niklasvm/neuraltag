@@ -2,3 +2,10 @@
 .env
 token.json
 data/
+**/__pycache__
+*.pyc
+*.pyo
+*.log
+.git
+.gitignore
+Dockerfile
