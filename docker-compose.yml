@@ -1,0 +1,10 @@
+services:
+  strava:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - STRAVA_TOKEN=${STRAVA_TOKEN}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PUSHBULLET_API_KEY=${PUSHBULLET_API_KEY}
+    image: ghcr.io/niklasvm/strava:latest

@@ -46,4 +46,4 @@ jobs:
       - name: Build the Docker image
         run: |
           uv pip compile pyproject.toml -o requirements.txt
-          docker build . -t ghcr.io/${{ github.repository }}/strava:latest
+          docker build . -t ghcr.io/${{ github.repository }}:latest

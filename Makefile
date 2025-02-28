@@ -10,3 +10,10 @@ lint_tests:
 unit_tests:
 	coverage run -m --source src pytest --durations=0
 	coverage report -m
+
+
+docker-run:
+	docker-compose run strava
+
+docker-bash:
+	docker-compose run strava bash
