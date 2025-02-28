@@ -34,6 +34,7 @@ jobs:
             make unit_tests
 
   docker_build_only:
+    name: Build docker image
     runs-on: ubuntu-latest
 
     steps:

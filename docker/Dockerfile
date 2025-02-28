@@ -4,7 +4,7 @@ WORKDIR /app
 
 RUN pip install uv
 COPY pyproject.toml .
-COPY poetry.lock .
+COPY uv.lock .
 RUN uv pip install -v .
 
 COPY . .
