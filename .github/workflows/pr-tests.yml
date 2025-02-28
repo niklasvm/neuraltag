@@ -40,4 +40,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build the Docker image
-        run: docker build . -t ghcr.io/${{ github.repository }}/strava:latest
+        run: |
+          uv pip compile pyproject.toml -o requirements.txt
+          docker build . -t ghcr.io/${{ github.repository }}/strava:latest
