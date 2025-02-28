@@ -86,7 +86,3 @@ def name_weight_training_activities(activities: list):
 
 if __name__ == "__main__":
     name_all_activities(days=365)
-
-    # test
-    with open("README.md", "a") as f:
-        f.write("hello world")
