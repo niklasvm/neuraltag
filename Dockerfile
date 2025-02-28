@@ -1,10 +1,4 @@
-FROM python:3.10-slim-buster as builder
-
-FROM armv7/python:3.10-slim-buster
-
-COPY --from=builder /usr/local/lib/python3.10 /usr/local/lib/python3.10
-COPY --from=builder /usr/local/bin /usr/local/bin
-
+FROM arm32v7/python:3.10-bookworm
 
 WORKDIR /app
 
