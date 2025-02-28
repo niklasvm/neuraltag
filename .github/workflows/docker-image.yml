@@ -26,6 +26,11 @@ jobs:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Setup dependencies
+      run: |
+          python -m pip install --upgrade pip
+          pip install uv
+          uv pip compile pyproject.toml -o requirements.txt
     - name: Build and push
       uses: docker/build-push-action@v5
       with:
