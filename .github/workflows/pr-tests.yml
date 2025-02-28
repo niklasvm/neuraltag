@@ -40,4 +40,4 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build the Docker image
-        run: docker build docker -t ghcr.io/${{ github.repository }}/strava:latest
+        run: docker build . -t ghcr.io/${{ github.repository }}/strava:latest
