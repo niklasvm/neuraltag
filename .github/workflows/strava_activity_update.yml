@@ -1,38 +1,36 @@
-name: Trigger name update
+name: Update Strava Activity Names
 
 on:
   schedule:
     # Runs every hour between 8am and 6pm UTC (9am and 7pm CEST)
     - cron: '*/15 6-18 * * *'
   workflow_dispatch: {}
+  # push:
+  #   branches:
+  #     - master
 
 jobs:
   run_script:
     runs-on: ubuntu-latest
     steps:
-      # - name: Checkout code
-      #   uses: actions/checkout@v4
-      #   with:
-      #     fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # - name: Set up Python
-      #   uses: actions/setup-python@v5
-      #   with:
-      #     python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-      # - name: Install dependencies
-      #   run: |
-      #     python -m pip install --upgrade pip
-      #     pip install uv
-      #     uv pip install . --system
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv
+          uv pip install . --system
 
       - name: Run script
-        run: |
-          docker run \
-            -e STRAVA_TOKEN=${STRAVA_TOKEN} \
-            -e GEMINI_API_KEY=${GEMINI_API_KEY} \
-            -e PUSHBULLET_API_KEY=${PUSHBULLET_API_KEY} \
-            ghcr.io/${{ github.repository }}:latest
+        run: python src/naming.py
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STRAVA_TOKEN: ${{ secrets.STRAVA_TOKEN }}
