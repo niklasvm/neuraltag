@@ -29,10 +29,9 @@ jobs:
       - name: Run script
         run: |
           docker run \
-            -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
-            -e STRAVA_TOKEN=${{ secrets.STRAVA_TOKEN }} \
-            -e GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
-            -e PUSHBULLET_API_KEY=${{ secrets.PUSHBULLET_API_KEY }} \
+            -e STRAVA_TOKEN=${STRAVA_TOKEN} \
+            -e GEMINI_API_KEY=${GEMINI_API_KEY} \
+            -e PUSHBULLET_API_KEY=${PUSHBULLET_API_KEY} \
             ghcr.io/${{ github.repository }}:latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
