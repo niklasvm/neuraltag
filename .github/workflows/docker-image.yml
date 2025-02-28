@@ -20,8 +20,8 @@ jobs:
     - name: Build the Docker image
       run: |
         uv pip compile pyproject.toml -o requirements.txt
-        docker build . -t ghcr.io/${{ github.repository }}/strava:latest
+        docker build . -t ghcr.io/${{ github.repository }}:latest
     - name: Log in to GitHub Container Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
     - name: Push the Docker image
-      run: docker push ghcr.io/${{ github.repository }}/strava:latest
+      run: docker push ghcr.io/${{ github.repository }}:latest
