@@ -1,4 +1,4 @@
-FROM arm32v7/python:3.10-bookworm
+FROM python:3.8-slim-buster
 
 WORKDIR /app
 
