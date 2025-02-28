@@ -39,6 +39,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv
       - name: Build the Docker image
         run: |
           uv pip compile pyproject.toml -o requirements.txt
