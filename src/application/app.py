@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 import requests
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 
 app = FastAPI()
@@ -18,17 +19,17 @@ def dispatch(content: dict):
 def trigger_gha():
     """Triggers a GitHub Actions workflow dispatch.
 
-        This function retrieves necessary environment variables (GITHUB_USER, REPO,
-        GITHUB_PAT, WORKFLOW_FILE) and uses them to construct the API endpoint for
-        triggering a workflow dispatch. It then sends a POST request to the GitHub API
-        with the required headers and data to initiate the workflow run.  The function
-        checks the response status code and prints a success or failure message
-        accordingly.
+    This function retrieves necessary environment variables (GITHUB_USER, REPO,
+    GITHUB_PAT, WORKFLOW_FILE) and uses them to construct the API endpoint for
+    triggering a workflow dispatch. It then sends a POST request to the GitHub API
+    with the required headers and data to initiate the workflow run.  The function
+    checks the response status code and prints a success or failure message
+    accordingly.
 
-        Raises:
-            KeyError: If any of the required environment variables are not set.
-            requests.exceptions.RequestException: If the API request fails.
-        """
+    Raises:
+        KeyError: If any of the required environment variables are not set.
+        requests.exceptions.RequestException: If the API request fails.
+    """
 
     GITHUB_USER = os.environ.get("GITHUB_USER")
     REPO = os.environ.get("REPO")
@@ -65,7 +66,9 @@ async def verify_webhook(
     """
     Handles the webhook verification request from Strava.
     """
-    if hub_mode == "subscribe" and hub_verify_token == os.environ.get("STRAVA_VERIFY_TOKEN"):
+    if hub_mode == "subscribe" and hub_verify_token == os.environ.get(
+        "STRAVA_VERIFY_TOKEN"
+    ):
         return JSONResponse(content={"hub.challenge": hub_challenge}, status_code=200)
     else:
         return JSONResponse(content={"error": "Verification failed"}, status_code=400)
@@ -85,4 +88,5 @@ def handle_webhook(content: dict):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
