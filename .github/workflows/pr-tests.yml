@@ -37,17 +37,10 @@ jobs:
 
       - name: Add coverage to PR
         id: jacoco
-        uses: madrapps/jacoco-report@v1.7.1
+        uses: orgoro/coverage@v3.2
         with:
-          paths: |
-            coverage.xml
-        
-          title: '### Coverage Report'
-          pass-emoji: ':green_circle:'
-          fail-emoji: ':red_circle:'
-          update-comment: true
-          continue-on-error: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+            coverageFile: coverage.xml
+            token: ${{ secrets.GITHUB_TOKEN }}
 
   docker_build_only:
     name: Build docker image
