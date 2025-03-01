@@ -40,7 +40,7 @@ jobs:
         uses: madrapps/jacoco-report@v1.7.1
         with:
           paths: |
-            ${{ github.workspace }}/coverage.xml
+            coverage.xml
         
           title: '### Coverage Report'
           pass-emoji: ':green_circle:'
