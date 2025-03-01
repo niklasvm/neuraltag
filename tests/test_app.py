@@ -2,7 +2,6 @@ import unittest
 from unittest.mock import patch
 from fastapi.testclient import TestClient
 from src.application.app import app
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,13 +10,14 @@ load_dotenv()
 class TestApp(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
-        self.strava_verify_token = os.environ.get("STRAVA_VERIFY_TOKEN")
-        self.github_user = os.environ.get("GITHUB_USER")
-        self.repo = os.environ.get("REPO")
-        self.github_pat = os.environ.get("GITHUB_PAT")
-        self.workflow_file = os.environ.get("WORKFLOW_FILE")
+        self.strava_verify_token = "strava_verify_token"
+        self.github_user = "github_user"
+        self.repo = "repo"
+        self.github_pat = "github_pat"
+        self.workflow_file = "workflow_file"
 
-    def test_verify_webhook_success(self):
+    @patch("src.application.app.os.environ.get", return_value="strava_verify_token")
+    def test_verify_webhook_success(self, mock_get):
         response = self.client.get(
             "/webhook",
             params={
@@ -48,8 +48,12 @@ class TestApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"message": "Received webhook event"})
 
+    @patch(
+        "src.application.app.os.environ.get",
+        side_effect=["github_user", "repo", "github_pat", "workflow_file"],
+    )
     @patch("requests.post")
-    def test_trigger_gha(self, mock_post):
+    def test_trigger_gha(self, mock_post, mock_get):
         from src.application.app import trigger_gha
 
         trigger_gha()
