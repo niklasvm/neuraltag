@@ -10,6 +10,7 @@ lint_tests:
 unit_tests:
 	coverage run -m --source src pytest --durations=0
 	coverage report -m
+	coverage xml
 
 
 docker-run:
