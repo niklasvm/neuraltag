@@ -1,0 +1,14 @@
+[Unit]
+Description=Strava Service
+After=network.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/app
+ExecStart=/home/pi/app/.venv/bin/python /home/pi/app/app.py
+Restart=always
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
