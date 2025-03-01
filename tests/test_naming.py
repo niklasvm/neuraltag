@@ -18,8 +18,7 @@ class TestNaming(unittest.TestCase):
     )
     @patch.object(src.naming, "Pushbullet")
     @patch.object(src.naming, "generate_activity_name_with_gemini")
-    @patch.object(src.naming, "extract_data_from_weight_training_activities")
-    @patch.object(src.naming, "extract_data_from_run_activities")
+    @patch.object(src.naming, "pre_process_data")
     @patch.object(src.naming, "get_strava_activities")
     @patch.object(src.naming, "authenticate_strava")
     @patch.object(src.naming, "load_dotenv")
@@ -28,14 +27,14 @@ class TestNaming(unittest.TestCase):
         mock_load_dotenv,
         mock_client,
         mock_get_activities,
-        mock_extract_run,
-        mock_extract_weight_training,
+        mock_pre_process_data,
         mock_gemini,
         mock_pb,
     ):
-        mock_get_activities.return_value = pd.DataFrame(
+        mock_pre_process_data.return_value = pd.DataFrame(
             {
                 "id": [1, 2, 3, 4],
+                "date": ["2022-01-01", "2022-01-01", "2022-01-01", "2022-01-01"],
                 "name": [
                     "Morning Run",
                     "Afternoon Run",
@@ -48,20 +47,10 @@ class TestNaming(unittest.TestCase):
                     RelaxedSportType("WeightTraining"),
                     RelaxedSportType("WeightTraining"),
                 ],
+                "rename": [True, False, True, False],
             }
         )
-        mock_extract_run.return_value = pd.DataFrame(
-            {
-                "id": [1, 2],
-                "name": ["Morning Run", "Afternoon Run"],
-            }
-        )
-        mock_extract_weight_training.return_value = pd.DataFrame(
-            {
-                "id": [3, 4],
-                "name": ["Morning Weight Training", "Afternoon Weight Training"],
-            }
-        )
+
         mock_gemini.return_value = [
             NameResult(name="Morning Run", description="Morning Run", probability=0.9),
             NameResult(
@@ -69,6 +58,9 @@ class TestNaming(unittest.TestCase):
             ),
         ]
         src.naming.name_all_activities(days=365)
+
+        mock_gemini.assert_called()
+        mock_pb.assert_called()
 
 
 if __name__ == "__main__":
