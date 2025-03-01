@@ -2,7 +2,7 @@
 source .env
 
 # test subscribe callback
-curl "${VERIFY_URL}?hub.verify_token=STRAVA&hub.challenge=15f7d1a91c1f40f8a748fd134752feb3&hub.mode=subscribe"
+curl "${VERIFY_URL}?hub.verify_token=${STRAVA_VERIFY_TOKEN}&hub.challenge=15f7d1a91c1f40f8a748fd134752feb3&hub.mode=subscribe"
 
 
 # subscribe
@@ -10,7 +10,7 @@ curl -X POST https://www.strava.com/api/v3/push_subscriptions \
 	  -F client_id=$STRAVA_CLIENT_ID \
 	  -F client_secret=${STRAVA_CLIENT_SECRET} \
 	  -F callback_url=${VERIFY_URL} \
-	  -F verify_token=STRAVA
+	  -F verify_token=${STRAVA_VERIFY_TOKEN}
 
 # view subscriptions
 curl -G https://www.strava.com/api/v3/push_subscriptions \
@@ -19,7 +19,8 @@ curl -G https://www.strava.com/api/v3/push_subscriptions \
 
 
 # delete subscription
-curl -X DELETE "https://www.strava.com/api/v3/push_subscriptions/${id}?client_id=${STRAVA_CLIENT_ID}&client_secret=${STRAVA_CLIENT_SECRET}"
+ID=275591
+curl -X DELETE "https://www.strava.com/api/v3/push_subscriptions/${ID}?client_id=${STRAVA_CLIENT_ID}&client_secret=${STRAVA_CLIENT_SECRET}"
 
 
 # test event
