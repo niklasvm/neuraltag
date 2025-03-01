@@ -59,7 +59,7 @@ def name_all_activities(days: int = 365):
             description="automagically named with Gemini 🤖",
         )
         pb.push_note(
-            title=f"Updated activity {id} to {best_name}",
+            title=f"Updated activity {activity_id} to {best_name}",
             body=f"Options:\n{options}",
         )
 
