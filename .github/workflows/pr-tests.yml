@@ -41,6 +41,12 @@ jobs:
         with:
           paths: |
             ${{ github.workspace }}/coverage.xml
+        
+          title: '### Coverage Report'
+          pass-emoji: ':green_circle:'
+          fail-emoji: ':red_circle:'
+          update-comment: true
+          continue-on-error: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
   docker_build_only:
