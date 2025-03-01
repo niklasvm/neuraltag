@@ -34,8 +34,8 @@ def name_all_activities(days: int = 365):
         print(f"{id}: {best_name}")
         client.update_activity(
             activity_id=id,
-            name=best_name,
-            description="automagically named with Gemini",
+            name=f"{best_name}",
+            description="automagically named with Gemini 🤖",
         )
         pb.push_note(
             title=f"Updated activity {id} to {best_name}",

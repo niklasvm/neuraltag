@@ -1,0 +1,3 @@
+fastpai
+uvicorn
+requests

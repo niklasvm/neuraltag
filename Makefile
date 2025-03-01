@@ -17,3 +17,6 @@ docker-run:
 
 docker-bash:
 	docker-compose run strava bash
+
+deploy:
+	bash ./cicd/deploy/deploy.sh
