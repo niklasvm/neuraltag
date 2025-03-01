@@ -32,15 +32,15 @@ def name_all_activities(days: int = 365):
             [f"{result.name}: {result.description}" for result in name_results]
         )
         print(f"{id}: {best_name}")
-        client.update_activity(activity_id=id, name=best_name)
+        client.update_activity(
+            activity_id=id,
+            name=best_name,
+            description="automagically named with Gemini",
+        )
         pb.push_note(
             title=f"Updated activity {id} to {best_name}",
             body=f"Options:\n{options}",
         )
-
-        # append to README
-        with open("README.md", "a") as f:
-            f.write(f"{id}: {best_name}\n")
 
 
 def name_run_activities(activities: list):
@@ -90,7 +90,3 @@ def name_weight_training_activities(activities: list):
 
 if __name__ == "__main__":
     name_all_activities(days=365)
-    
-    # test
-    with open("README.md", "a") as f:
-        f.write("hello world")

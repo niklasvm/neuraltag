@@ -3,7 +3,7 @@ name: Update Strava Activity Names
 on:
   schedule:
     # Runs every hour between 8am and 6pm UTC (9am and 7pm CEST)
-    - cron: '*/15 6-16 * * *'
+    - cron: '*/15 6-18 * * *'
   workflow_dispatch: {}
   # push:
   #   branches:

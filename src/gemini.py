@@ -1,3 +1,4 @@
+import json
 from google import genai
 import pandas as pd
 from pydantic import BaseModel
@@ -44,7 +45,7 @@ def generate_activity_name_with_gemini(
 
     # parse response
     formatted_results = "\n".join(response.text.strip().split("\n")[1:-1])
-    results = eval(formatted_results)
+    results = json.loads(formatted_results)
 
     results = [NameResult(**result) for result in results]
 
