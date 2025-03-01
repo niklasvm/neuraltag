@@ -8,6 +8,8 @@ jobs:
   tests:
     name: PR Tests
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       
@@ -32,6 +34,13 @@ jobs:
         run: |
             source .venv/bin/activate
             make unit_tests
+
+      - name: Add coverage to PR
+        id: jacoco
+        uses: orgoro/coverage@v3.2
+        with:
+            coverageFile: coverage.xml
+            token: ${{ secrets.GITHUB_TOKEN }}
 
   docker_build_only:
     name: Build docker image

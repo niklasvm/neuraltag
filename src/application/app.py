@@ -30,6 +30,7 @@ def trigger_gha():
         KeyError: If any of the required environment variables are not set.
         requests.exceptions.RequestException: If the API request fails.
     """
+    load_dotenv(override=True)
 
     GITHUB_USER = os.environ.get("GITHUB_USER")
     REPO = os.environ.get("REPO")
@@ -66,6 +67,7 @@ async def verify_webhook(
     """
     Handles the webhook verification request from Strava.
     """
+    load_dotenv(override=True)
     if hub_mode == "subscribe" and hub_verify_token == os.environ.get(
         "STRAVA_VERIFY_TOKEN"
     ):

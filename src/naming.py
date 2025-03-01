@@ -4,8 +4,7 @@ from pushbullet import Pushbullet
 from dotenv import load_dotenv
 
 from src.data import (
-    extract_data_from_run_activities,
-    extract_data_from_weight_training_activities,
+    pre_process_data,
 )
 from src.gemini import generate_activity_name_with_gemini
 from src.strava import authenticate_strava, get_strava_activities
@@ -19,73 +18,50 @@ def name_all_activities(days: int = 365):
     client = authenticate_strava(token_dict)
     activities = get_strava_activities(client, days=days)
 
-    # name activities
-    run_names = name_run_activities(activities)
-    weight_training_names = name_weight_training_activities(activities)
-    all_names = run_names | weight_training_names
+    df = pre_process_data(
+        activities=activities, supported_sports=["Run", "Weight Training"]
+    )
+    # df.iloc[-3:, df.columns.get_loc("rename")] = True  # to simulate
 
-    # publish names
+    ids_to_rename = df[df["rename"]]["id"].to_list()
+    print(f"Found {len(ids_to_rename)} activities to rename")
+
     pb = Pushbullet(os.environ["PUSHBULLET_API_KEY"])
-    for id, name_results in all_names.items():
+    for activity_id in ids_to_rename:
+        sport_type = df[df["id"] == activity_id]["sport_type"].values[0]
+        existing_name = df[df["id"] == activity_id]["name"].values[0]
+        date = df[df["id"] == activity_id]["date"].values[0]
+
+        sport_activities = df[df["sport_type"] == sport_type]
+        del sport_activities["sport_type"]
+
+        # remove columns that are all NaN
+        sport_activities = sport_activities.dropna(axis=1, how="all")
+        del sport_activities["rename"]
+
+        # generate name
+        name_results = generate_activity_name_with_gemini(
+            activity_id=activity_id,
+            data=sport_activities,
+            number_of_options=3,
+            api_key=os.environ["GEMINI_API_KEY"],
+        )
+
+        # publish name
         best_name = name_results[0].name
         options = "\n".join(
             [f"{result.name}: {result.description}" for result in name_results]
         )
-        print(f"{id}: {best_name}")
+        print(f"Renaming: {activity_id} on {date} {existing_name} --> {best_name}")
         client.update_activity(
-            activity_id=id,
+            activity_id=activity_id,
             name=f"{best_name}",
             description="automagically named with Gemini 🤖",
         )
         pb.push_note(
-            title=f"Updated activity {id} to {best_name}",
+            title=f"Updated activity {activity_id} to {best_name}",
             body=f"Options:\n{options}",
         )
-
-
-def name_run_activities(activities: list):
-    run_regex = r"(Morning|Afternoon|Evening|Night)\sRun"
-    run_activities = extract_data_from_run_activities(activities)
-
-    unnamed_activities = run_activities[
-        run_activities["name"].str.contains(run_regex, regex=True)
-    ]
-    unnamed_activity_ids = unnamed_activities["id"].to_list()
-
-    names = {}
-    for id in unnamed_activity_ids:
-        names[id] = generate_activity_name_with_gemini(
-            activity_id=id,
-            data=run_activities,
-            number_of_options=3,
-            api_key=os.environ["GEMINI_API_KEY"],
-        )
-
-    return names
-
-
-def name_weight_training_activities(activities: list):
-    weight_training_regex = r"(Morning|Afternoon|Evening|Night)\sWeight Training"
-    weight_training_activities = extract_data_from_weight_training_activities(
-        activities
-    )
-
-    unnamed_activities = weight_training_activities[
-        weight_training_activities["name"].str.contains(
-            weight_training_regex, regex=True
-        )
-    ]
-    unnamed_activity_ids = unnamed_activities["id"].to_list()
-
-    names = {}
-    for id in unnamed_activity_ids:
-        names[id] = generate_activity_name_with_gemini(
-            activity_id=id,
-            data=weight_training_activities,
-            number_of_options=3,
-            api_key=os.environ["GEMINI_API_KEY"],
-        )
-    return names
 
 
 if __name__ == "__main__":
