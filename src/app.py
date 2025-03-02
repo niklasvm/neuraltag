@@ -1,18 +1,19 @@
-from fastapi import FastAPI, Query
+import datetime
+from fastapi import Cookie, FastAPI, Query, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 import requests
 import os
 from dotenv import load_dotenv
 from stravalib import Client
 
-from src.flows import new_user
+from src.flows import load_all_historic_activities, login_user
 
 load_dotenv()
 
 app = FastAPI()
 
 
-authorization_callback = "/authorization_callback"
+authorization_callback = "/login"
 
 
 def dispatch(content: dict):
@@ -112,10 +113,27 @@ async def authorization() -> RedirectResponse:
 
 
 @app.get(authorization_callback)
-async def callback(code: str, scope: str) -> dict[str, str]:
-    new_user(code=code, scope=scope)
+async def login(code: str, scope: str, response: Response) -> dict[str, str]:
+    athlete_id = login_user(code=code, scope=scope)
 
-    return {"message": "Authorization successful"}
+    # save cookie with athlete_id
+    response.set_cookie(key="athlete_id", value=str(athlete_id))
+
+    return {"message": f"Logged in as athlete {athlete_id}"}
+
+
+@app.get("/user")
+async def user(athlete_id: str = Cookie(None)):
+    athlete_id = int(athlete_id)
+    return {"athlete_id": athlete_id}
+
+
+@app.get("/load_activities")
+async def load_activities(
+    after: datetime.datetime, before: datetime.datetime, athlete_id: int = Cookie(None)
+) -> dict[str, str]:
+    n = load_all_historic_activities(athlete_id=athlete_id, after=after, before=before)
+    return {"message": f"{n} activities loaded"}
 
 
 if __name__ == "__main__":

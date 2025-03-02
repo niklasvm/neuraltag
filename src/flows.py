@@ -3,16 +3,18 @@ import logging
 import os
 
 from dotenv import load_dotenv
+import pandas as pd
 from stravalib import Client
 
 from src.data.db import StravaDatabase
-from src.data.models import SummaryActivity
+
+from src.gemini import generate_activity_name_with_gemini
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def new_user(code: str, scope: str):
+def login_user(code: str, scope: str) -> int | None:
     """Exchanges a Strava authorization code for an access token, retrieves the athlete's information, and stores the authentication details and athlete data in a database.
     Args:
         code (str): The Strava authorization code received from the user.
@@ -46,8 +48,12 @@ def new_user(code: str, scope: str):
     db.add_auth(athlete.id, access_token, refresh_token, expires_at, scope)
     db.add_athlete(athlete)
 
+    return athlete.id
 
-def load_historic_activities(athlete_id: int, days: int):
+
+def load_all_historic_activities(
+    athlete_id: int, after: datetime.datetime, before: datetime.datetime
+):
     """Loads activities from Strava for a given athlete and number of days.
 
     It retrieves the latest activity date from the database, fetches activities from Strava
@@ -60,16 +66,6 @@ def load_historic_activities(athlete_id: int, days: int):
     """
     load_dotenv()
     db = StravaDatabase(connection_string=os.environ["DB_CONNECTION_STRING"])
-
-    # get latest date
-    latest_date = (
-        db.session.query(SummaryActivity)
-        .order_by(SummaryActivity.start_date.desc())
-        .first()
-        .start_date
-    )
-    logger.info(f"Latest date: {latest_date}")
-
     token = db.get_auth(athlete_id)
 
     client = Client(
@@ -83,18 +79,68 @@ def load_historic_activities(athlete_id: int, days: int):
         refresh_token=token.refresh_token,
     )
 
-    earliest_date = datetime.datetime.now() - datetime.timedelta(days=days)
-    if latest_date:
-        after = max(latest_date, earliest_date)
-
-    after = after.strftime("%Y-%m-%d")
-
-    activities = client.get_activities(after=after)
+    activities = client.get_activities(after=after, before=before)
     activities = [x for x in activities]
     logger.info(f"Number of activities to load: {len(activities)}")
 
     db.add_activities(activities)
 
+    return len(activities)
+
+
+def auto_name_activity(athlete_id: int, activity_id: int, days: int):
+    load_dotenv(override=True)
+
+    db = StravaDatabase(connection_string=os.environ["DB_CONNECTION_STRING"])
+
+    activity = db.get_activity(activity_id=activity_id)
+
+    after = datetime.datetime.now() - datetime.timedelta(days=days)
+
+    activities = db.get_activities(athlete_id=athlete_id, after=after)
+
+    activities_df = pd.DataFrame([x.to_dict() for x in activities])
+    columns = [
+        "id",
+        "date",
+        "time",
+        "day_of_week",
+        "name",
+        "average_heartrate",
+        "max_heartrate",
+        "total_elevation_gain",
+        "weighted_average_watts",
+        "moving_time_minutes",
+        "distance_km",
+        "sport_type",
+        "start_lat",
+        "start_lng",
+        "end_lat",
+        "end_lng",
+        "map_centroid_lat",
+        "map_centroid_lon",
+        "map_area",
+    ]
+    activities_df = activities_df[columns]
+    activities_df = activities_df[activities_df["sport_type"] == activity.sport_type]
+    activities_df = activities_df.dropna(axis=1, how="all")
+
+    name_results = generate_activity_name_with_gemini(
+        activity_id=activity_id,
+        data=activities_df,
+        number_of_options=3,
+        api_key=os.environ["GEMINI_API_KEY"],
+    )
+
+    for result in name_results:
+        db.add_name_suggestion(
+            activity_id=activity_id,
+            name=result.name,
+            description=result.description,
+            probability=result.probability,
+        )
+
 
 if __name__ == "__main__":
-    load_historic_activities(athlete_id=1411289, days=365)
+    load_all_historic_activities(athlete_id=1411289, days=3000, force=True)
+    # auto_name_activity(athlete_id=1411289, activity_id=11721753637, days=365)
