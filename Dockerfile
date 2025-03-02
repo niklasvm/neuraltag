@@ -9,4 +9,6 @@ RUN uv pip install -r requirements.txt --system
 COPY . .
 RUN pip install -e ./
 
-CMD ["python", "src/naming.py"]
+EXPOSE 8000
+
+CMD ["python", "src/app.py"]

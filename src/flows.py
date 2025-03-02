@@ -24,7 +24,7 @@ def login_user(code: str, scope: str) -> int | None:
         scope (str): The scope of the authorization.
     """
 
-    load_dotenv()
+    # load_dotenv(override=True)
 
     # exchange code for token
     client = Client()
@@ -48,19 +48,23 @@ def login_user(code: str, scope: str) -> int | None:
     db = StravaDatabase(connection_string)
 
     # add auth
-    db.add_auth(athlete.id, access_token, refresh_token, expires_at, scope)
     db.add_athlete(athlete)
+    db.add_auth(athlete.id, access_token, refresh_token, expires_at, scope)
 
     return athlete.id
 
 
 def new_activity_created_workflow(athlete_id: int, activity_id: int):
-    load_dotenv(override=True)
+    # load_dotenv(override=True)
 
     db = StravaDatabase(connection_string=os.environ["DB_CONNECTION_STRING"])
 
     # add activity
     token = db.get_auth(athlete_id)
+    if not token:
+        logger.error(f"Authentication not found for athlete {athlete_id}")
+        return
+
     client = Client(
         access_token=token.access_token,
         refresh_token=token.refresh_token,
@@ -125,7 +129,7 @@ def load_all_historic_activities(
             athlete_id (int): The ID of the athlete.
             days (int): The number of days to load activities for.
     """
-    load_dotenv()
+    # load_dotenv(override=True)
     db = StravaDatabase(connection_string=os.environ["DB_CONNECTION_STRING"])
     token = db.get_auth(athlete_id)
 
@@ -157,10 +161,14 @@ def query_name_suggestions_for_activity(athlete_id: int, activity_id: int, days:
         activity_id (int): The ID of the activity to generate name suggestions for.
         days (int): The number of past days to consider for similar activities.
     """
-    load_dotenv(override=True)
+    # load_dotenv(override=True)
 
     db = StravaDatabase(connection_string=os.environ["DB_CONNECTION_STRING"])
     activity = db.get_activity(activity_id=activity_id)
+
+    if not activity:
+        logger.error(f"Activity {activity_id} not found in the database")
+        return
 
     # cancel if activity already has name suggestions
     if activity.name_suggestions:
@@ -230,7 +238,7 @@ def trigger_gha():
         KeyError: If any of the required environment variables are not set.
         requests.exceptions.RequestException: If the API request fails.
     """
-    load_dotenv(override=True)
+    # load_dotenv(override=True)
 
     GITHUB_USER = os.environ.get("GITHUB_USER")
     REPO = os.environ.get("REPO")
@@ -259,5 +267,11 @@ def trigger_gha():
 
 
 if __name__ == "__main__":
-    new_activity_created_workflow(athlete_id=1411289, activity_id=13630433447)
-    # query_name_suggestions_for_activity(athlete_id=1411289, activity_id=2156152415,days=365)
+    # new_activity_created_workflow(athlete_id=1411289, activity_id=13630433447)
+    # query_name_suggestions_for_activity(athlete_id=1411289, activity_id=13770614816,days=365)
+    load_dotenv(override=True)
+    load_all_historic_activities(
+        athlete_id=1411289,
+        after=datetime.datetime(2024, 1, 1),
+        before=datetime.datetime(2025, 3, 10),
+    )

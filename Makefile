@@ -14,10 +14,20 @@ unit_tests:
 
 
 docker-run:
-	docker-compose run strava
+	source .env && \
+	uv pip compile pyproject.toml -o requirements.txt && \
+	docker-compose up --build
+
+docker-build:
+	source .env && \
+	uv pip compile pyproject.toml -o requirements.txt && \
+	docker-compose build
 
 docker-bash:
 	docker-compose run strava bash
+
+docker-dev:
+	docker-compose run strava fastapi dev ./src/app.py --reload --host 0.0.0.0 --port 8000
 
 deploy:
 	bash ./cicd/deploy/deploy.sh

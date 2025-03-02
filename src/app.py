@@ -1,13 +1,19 @@
 import os
 
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from fastapi import FastAPI, Query, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 from stravalib import Client
+from pydantic import BaseModel
 
-from src.flows import login_user, new_activity_created_workflow
+from src.flows import (
+    login_user,
+    new_activity_created_workflow,
+    load_all_historic_activities,
+)
 
-app = FastAPI(openapi_url=None)
+# app = FastAPI(openapi_url=None)
+app = FastAPI()
 
 AUTHORIZATION_CALLBACK = "/login"
 
@@ -51,7 +57,7 @@ async def verify_strava_subscription(
     """
     Handles the webhook verification request from Strava.
     """
-    load_dotenv(override=True)
+    # load_dotenv(override=True)
     if hub_mode == "subscribe" and hub_verify_token == os.environ.get(
         "STRAVA_VERIFY_TOKEN"
     ):
@@ -62,7 +68,7 @@ async def verify_strava_subscription(
 
 @app.get("/authorization")
 async def authorization() -> RedirectResponse:
-    load_dotenv(override=True)
+    # load_dotenv(override=True)
 
     client = Client()
 
@@ -84,7 +90,31 @@ async def login(code: str, scope: str, response: Response) -> dict[str, str]:
     return {"message": f"Logged in as athlete {athlete_id}"}
 
 
+class HistoricActivitiesRequest(BaseModel):
+    athlete_id: int
+    after: str
+    before: str
+
+
+@app.post("/load_historic_activities")
+def load_historic_activities(request: HistoricActivitiesRequest):
+    """
+    Loads all historic activities for a given athlete.
+    """
+
+    import datetime
+
+    after_date = datetime.datetime.strptime(request.after, "%Y-%m-%d")
+    before_date = datetime.datetime.strptime(request.before, "%Y-%m-%d")
+    num_activities = load_all_historic_activities(
+        athlete_id=request.athlete_id, after=after_date, before=before_date
+    )
+    return {
+        "message": f"Loaded {num_activities} activities for athlete {request.athlete_id}"
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)
