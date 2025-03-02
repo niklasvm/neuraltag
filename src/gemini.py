@@ -40,6 +40,9 @@ def generate_activity_name_with_gemini(
     Provide {number_of_options} options for a name for the input activity that is consistent with the data. The names can have one or more emojis. For each name, explain why it was chosen.
     """
 
+    with open("prompt.txt", "w") as f:
+        f.write(prompt)
+
     client = genai.Client(api_key=api_key)
     response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
 
