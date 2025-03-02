@@ -1,12 +1,18 @@
 from fastapi import FastAPI, Query
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 import requests
 import os
 from dotenv import load_dotenv
+from stravalib import Client
+
+from src.flows import new_user
 
 load_dotenv()
 
 app = FastAPI()
+
+
+authorization_callback = "/authorization_callback"
 
 
 def dispatch(content: dict):
@@ -59,7 +65,7 @@ def trigger_gha():
 
 
 @app.get("/webhook")
-async def verify_webhook(
+async def verify_strava_subscription(
     hub_verify_token: str = Query(None, alias="hub.verify_token"),
     hub_challenge: str = Query(None, alias="hub.challenge"),
     hub_mode: str = Query(None, alias="hub.mode"),
@@ -77,15 +83,39 @@ async def verify_webhook(
 
 
 @app.post("/webhook")
-def handle_webhook(content: dict):
+def strava_webhook(content: dict):
     """
     Handles the webhook event from Strava.
     """
     print(content)
 
-    dispatch(content)
+    # dispatch(content)
 
     return JSONResponse(content={"message": "Received webhook event"}, status_code=200)
+
+
+@app.get("/authorization")
+async def authorization() -> RedirectResponse:
+    load_dotenv(override=True)
+
+    # redirect to strava authorization url
+    client = Client()
+
+    application_url = os.environ["APPLICATION_URL"]
+    redirect_uri = application_url + authorization_callback
+    url = client.authorization_url(
+        client_id=os.environ["STRAVA_CLIENT_ID"],
+        redirect_uri=redirect_uri,
+    )
+
+    return RedirectResponse(url=url)
+
+
+@app.get(authorization_callback)
+async def callback(code: str, scope: str) -> dict[str, str]:
+    new_user(code=code, scope=scope)
+
+    return {"message": "Authorization successful"}
 
 
 if __name__ == "__main__":
