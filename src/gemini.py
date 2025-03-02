@@ -10,6 +10,25 @@ class NameResult(BaseModel):
     probability: float
 
 
+prompt = """
+[BEGIN CONTEXT]
+{context_data}
+[END CONTEXT]
+
+[OUTPUT FORMAT]
+class Response(BaseModel):
+    name: str
+    description: str
+    probability: float
+[END OUTPUT FORMAT]
+
+Given the following input:
+{input}
+
+[PROMPT]
+Provide {number_of_options} options for a name for the input activity that is consistent with the data. The names can have one or more emojis. For each name, explain why it was chosen.
+"""
+
 def generate_activity_name_with_gemini(
     activity_id: int, data: pd.DataFrame, number_of_options: int, api_key: str
 ) -> list[NameResult]:
@@ -21,30 +40,17 @@ def generate_activity_name_with_gemini(
     del context_data["id"]
 
     # create context
-    prompt = f"""
-    [BEGIN CONTEXT]
-    {context_data.to_string(index=False)}
-    [END CONTEXT]
-
-    [OUTPUT FORMAT]
-    class Response(BaseModel):
-        name: str
-        description: str
-        probability: float
-    [END OUTPUT FORMAT]
-
-    Given the following input:
-    {input.to_string(index=True)}
-
-    [PROMPT]
-    Provide {number_of_options} options for a name for the input activity that is consistent with the data. The names can have one or more emojis. For each name, explain why it was chosen.
-    """
+    rendered_prompt = prompt.format(
+        context_data=context_data.to_string(index=False),
+        input=input.to_string(index=True),
+        number_of_options=number_of_options,
+    )
 
     with open("prompt.txt", "w") as f:
-        f.write(prompt)
+        f.write(rendered_prompt)
 
     client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+    response = client.models.generate_content(model="gemini-2.0-flash", contents=rendered_prompt)
 
     # parse response
     formatted_results = "\n".join(response.text.strip().split("\n")[1:-1])

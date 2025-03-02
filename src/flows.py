@@ -100,7 +100,7 @@ def new_activity_created_workflow(athlete_id: int, activity_id: int):
 
     # update strava activity name
     description = "automagically named with Gemini 🤖"
-    if activity.description is None or activity.description not in description:
+    if description not in activity.description:
         client.update_activity(
             activity_id=activity_id,
             name=top_name_suggestion.name,
@@ -267,11 +267,12 @@ def trigger_gha():
 
 
 if __name__ == "__main__":
-    # new_activity_created_workflow(athlete_id=1411289, activity_id=13630433447)
-    # query_name_suggestions_for_activity(athlete_id=1411289, activity_id=13770614816,days=365)
+    new_activity_created_workflow(athlete_id=1411289, activity_id=13449860689)
     load_dotenv(override=True)
-    load_all_historic_activities(
-        athlete_id=1411289,
-        after=datetime.datetime(2024, 1, 1),
-        before=datetime.datetime(2025, 3, 10),
-    )
+    # query_name_suggestions_for_activity(athlete_id=1411289, activity_id=13751356765,days=365)
+
+    # load_all_historic_activities(
+    #     athlete_id=1411289,
+    #     after=datetime.datetime(2024, 1, 1),
+    #     before=datetime.datetime(2025, 3, 10),
+    # )
