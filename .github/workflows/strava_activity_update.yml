@@ -34,12 +34,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install uv
-          uv pip install . --system
-          uv pip install ./ --system
-          
+          uv venv
+          uv sync
 
       - name: Run script
-        run: python src/workflows.py --activity_id ${{ github.event.inputs.activity_id }}
+        run: |
+          source .venv/bin/activate
+          python src/workflows.py --activity_id ${{ github.event.inputs.activity_id }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STRAVA_TOKEN: ${{ secrets.STRAVA_TOKEN }}
