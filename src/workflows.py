@@ -16,6 +16,7 @@ from src.data.data import (
 
 from src.gemini import generate_activity_name_with_gemini
 from pushbullet import Pushbullet
+import argparse
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -150,4 +151,12 @@ def rename_workflow(activity_id: int):
 
 
 if __name__ == "__main__":
-    rename_workflow(activity_id=13770614816)
+    # get arg from command line
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--activity_id", type=int, required=True, help="Strava activity ID"
+    )
+    args = parser.parse_args()
+
+    rename_workflow(activity_id=args.activity_id)
