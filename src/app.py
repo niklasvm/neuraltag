@@ -1,19 +1,16 @@
 import os
 
-# from dotenv import load_dotenv
-from fastapi import FastAPI, Query, Response
+from dotenv import load_dotenv
+import requests
+from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse, RedirectResponse
 from stravalib import Client
-from pydantic import BaseModel
 
-from src.flows import (
-    login_user,
-    new_activity_created_workflow,
-    load_all_historic_activities,
-)
 
-# app = FastAPI(openapi_url=None)
-app = FastAPI()
+load_dotenv(override=True)
+
+app = FastAPI(openapi_url=None)
+# app = FastAPI()
 
 AUTHORIZATION_CALLBACK = "/login"
 
@@ -32,7 +29,7 @@ def strava_webhook(content: dict):
         )
 
     if (
-        content.get("aspect_type") in ("create", "update")
+        content.get("aspect_type") == "create"
         and content.get("object_type") == "activity"
     ):
         activity_id = content.get("object_id")
@@ -43,7 +40,7 @@ def strava_webhook(content: dict):
                 content={"error": "Invalid activity or athlete ID"}, status_code=400
             )
 
-        new_activity_created_workflow(activity_id=activity_id, athlete_id=athlete_id)
+        trigger_gha(dict(activity_id=activity_id))
 
     return JSONResponse(content={"message": "Received webhook event"}, status_code=200)
 
@@ -85,33 +82,55 @@ async def authorization() -> RedirectResponse:
 
 
 @app.get(AUTHORIZATION_CALLBACK)
-async def login(code: str, scope: str, response: Response) -> dict[str, str]:
+async def login(code: str, scope: str) -> dict[str, str]:
+    from src.flows import login_user
+
     athlete_id = login_user(code=code, scope=scope)
     return {"message": f"Logged in as athlete {athlete_id}"}
 
 
-class HistoricActivitiesRequest(BaseModel):
-    athlete_id: int
-    after: str
-    before: str
+def trigger_gha(inputs: dict) -> None:
+    """Triggers a GitHub Actions workflow dispatch.
 
+    This function retrieves necessary environment variables (GITHUB_USER, REPO,
+    GITHUB_PAT, WORKFLOW_FILE) and uses them to construct the API endpoint for
+    triggering a workflow dispatch. It then sends a POST request to the GitHub API
+    with the required headers and data to initiate the workflow run.  The function
+    checks the response status code and prints a success or failure message
+    accordingly.
 
-@app.post("/load_historic_activities")
-def load_historic_activities(request: HistoricActivitiesRequest):
+    Raises:
+        KeyError: If any of the required environment variables are not set.
+        requests.exceptions.RequestException: If the API request fails.
     """
-    Loads all historic activities for a given athlete.
-    """
 
-    import datetime
+    GITHUB_USER = os.environ.get("GITHUB_USER")
+    REPO = os.environ.get("REPO")
+    GITHUB_PAT = os.environ.get("GITHUB_PAT")
+    WORKFLOW_FILE = os.environ.get("WORKFLOW_FILE")
+    ENDPOINT = f"https://api.github.com/repos/{GITHUB_USER}/{REPO}/actions/workflows/{WORKFLOW_FILE}/dispatches"
+    REF = "master"
 
-    after_date = datetime.datetime.strptime(request.after, "%Y-%m-%d")
-    before_date = datetime.datetime.strptime(request.before, "%Y-%m-%d")
-    num_activities = load_all_historic_activities(
-        athlete_id=request.athlete_id, after=after_date, before=before_date
-    )
-    return {
-        "message": f"Loaded {num_activities} activities for athlete {request.athlete_id}"
+    headers = {
+        "Authorization": f"Bearer {GITHUB_PAT}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Content-Type": "application/json",
     }
+
+    data = {
+        "ref": f"{REF}",
+        "inputs": inputs,
+    }
+
+    response = requests.post(ENDPOINT, headers=headers, json=data)
+
+    if response.status_code == 204:
+        print("Workflow dispatch triggered successfully.")
+    else:
+        print(
+            f"Failed to trigger workflow dispatch. Status code: {response.status_code}, Response: {response.text}"
+        )
 
 
 if __name__ == "__main__":

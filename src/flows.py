@@ -1,15 +1,19 @@
 import datetime
+import json
 import logging
 import os
 
 from dotenv import load_dotenv
 import pandas as pd
-import requests
+
 from stravalib import Client
 
-from src.data.db import StravaDatabase
+from src.data.data import (
+    fetch_activity_data,
+    fetch_historic_activity_data,
+    process_activity,
+)
 
-from src.data.models import NameSuggestion
 from src.gemini import generate_activity_name_with_gemini
 from pushbullet import Pushbullet
 
@@ -34,152 +38,65 @@ def login_user(code: str, scope: str) -> int | None:
         code=code,
     )
     access_token = token_response["access_token"]
-    refresh_token = token_response["refresh_token"]
-    expires_at = token_response["expires_at"]
+
+    token_response["STRAVA_CLIENT_ID"] = os.environ["STRAVA_CLIENT_ID"]
+    token_response["STRAVA_CLIENT_SECRET"] = os.environ["STRAVA_CLIENT_SECRET"]
+
+    with open("token.json", "w") as f:
+        json.dump(token_response, f)
 
     # get athlete
     client.access_token = access_token
     athlete = client.get_athlete()
 
-    # add auth
-    connection_string = os.environ["DB_CONNECTION_STRING"]
-
-    # add athlete
-    db = StravaDatabase(connection_string)
-
-    # add auth
-    db.add_athlete(athlete)
-    db.add_auth(athlete.id, access_token, refresh_token, expires_at, scope)
-
     return athlete.id
 
 
-def new_activity_created_workflow(athlete_id: int, activity_id: int):
-    # load_dotenv(override=True)
+def rename_workflow(activity_id: int):
+    load_dotenv(override=True)
 
-    db = StravaDatabase(connection_string=os.environ["DB_CONNECTION_STRING"])
+    days = 365
+    temperature = 2
 
-    # add activity
-    token = db.get_auth(athlete_id)
-    if not token:
-        logger.error(f"Authentication not found for athlete {athlete_id}")
-        return
+    gemini_named_description = "automagically named with Gemini 🤖"
+
+    token = json.loads(os.environ["STRAVA_TOKEN"])
+    for key, value in token.items():
+        os.environ[key] = str(value)
 
     client = Client(
-        access_token=token.access_token,
-        refresh_token=token.refresh_token,
-        token_expires=token.expires_at,
+        access_token=os.environ["access_token"],
+        refresh_token=os.environ["refresh_token"],
+        token_expires=os.environ["expires_at"],
     )
     client.refresh_access_token(
         client_id=os.environ["STRAVA_CLIENT_ID"],
         client_secret=os.environ["STRAVA_CLIENT_SECRET"],
-        refresh_token=token.refresh_token,
+        refresh_token=os.environ["refresh_token"],
     )
 
-    activity = client.get_activity(activity_id=activity_id)
-    db.add_activity(activity)
-
-    # query name suggestions
-    query_name_suggestions_for_activity(
-        athlete_id=athlete_id, activity_id=activity_id, days=365
+    activity = fetch_activity_data(
+        client=client,
+        activity_id=activity_id,
     )
 
-    # get name with highest probability field valiue
-    name_suggestions = (
-        db.session.query(NameSuggestion)
-        .filter(NameSuggestion.activity_id == activity_id)
-        .all()
-    )
-    name_suggestions = sorted(
-        name_suggestions, key=lambda x: x.probability, reverse=True
-    )
-    top_name_suggestion = name_suggestions[0]
-    logger.info(
-        f"Top name suggestion for activity {activity_id}: {top_name_suggestion.name}"
+    # if gemini_named_description in str(activity.description):
+    #     logger.info(f"Activity {activity_id} already named with Gemini 🤖")
+    #     return
+
+    before = activity.start_date_local + datetime.timedelta(days=1)
+    after = before - datetime.timedelta(days=days)
+    activities = fetch_historic_activity_data(
+        client=client,
+        after=after,
+        before=before,
     )
 
-    # update strava activity name
-    description = "automagically named with Gemini 🤖"
-    if description not in activity.description:
-        client.update_activity(
-            activity_id=activity_id,
-            name=top_name_suggestion.name,
-            description=description,
-        )
+    activity = process_activity(activity)
+    activities = [process_activity(x) for x in activities]
 
-        # notify via pushbullet
-        pb = Pushbullet(os.environ["PUSHBULLET_API_KEY"])
-        pb.push_note(
-            title=top_name_suggestion.name, body=top_name_suggestion.description
-        )
-    else:
-        logger.info(f"Activity {activity_id} already named with Gemini 🤖")
+    activities_df = pd.DataFrame(activities)
 
-
-def load_all_historic_activities(
-    athlete_id: int, after: datetime.datetime, before: datetime.datetime
-):
-    """Loads activities from Strava for a given athlete and number of days.
-
-    It retrieves the latest activity date from the database, fetches activities from Strava
-    since that date (or a specified number of days if no activities exist in the DB),
-    and saves the new activities to the database.
-
-        Args:
-            athlete_id (int): The ID of the athlete.
-            days (int): The number of days to load activities for.
-    """
-    # load_dotenv(override=True)
-    db = StravaDatabase(connection_string=os.environ["DB_CONNECTION_STRING"])
-    token = db.get_auth(athlete_id)
-
-    client = Client(
-        access_token=token.access_token,
-        refresh_token=token.refresh_token,
-        token_expires=token.expires_at,
-    )
-    client.refresh_access_token(
-        client_id=os.environ["STRAVA_CLIENT_ID"],
-        client_secret=os.environ["STRAVA_CLIENT_SECRET"],
-        refresh_token=token.refresh_token,
-    )
-
-    activities = client.get_activities(after=after, before=before)
-    activities = [x for x in activities]
-    logger.info(f"Number of activities to load: {len(activities)}")
-
-    db.add_activities(activities)
-
-    return len(activities)
-
-
-def query_name_suggestions_for_activity(athlete_id: int, activity_id: int, days: int):
-    """Generates activity name suggestions using a Gemini model and stores them in the database.
-
-    Args:
-        athlete_id (int): The ID of the athlete.
-        activity_id (int): The ID of the activity to generate name suggestions for.
-        days (int): The number of past days to consider for similar activities.
-    """
-    # load_dotenv(override=True)
-
-    db = StravaDatabase(connection_string=os.environ["DB_CONNECTION_STRING"])
-    activity = db.get_activity(activity_id=activity_id)
-
-    if not activity:
-        logger.error(f"Activity {activity_id} not found in the database")
-        return
-
-    # cancel if activity already has name suggestions
-    if activity.name_suggestions:
-        logger.info(f"Activity {activity_id} already has name suggestions")
-        return
-
-    # prepare context data
-    after = activity.start_date - datetime.timedelta(days=days)
-    activities = db.get_activities(athlete_id=athlete_id, after=after)
-
-    activities_df = pd.DataFrame([x.to_dict() for x in activities])
     columns = [
         "id",
         "date",
@@ -202,77 +119,35 @@ def query_name_suggestions_for_activity(athlete_id: int, activity_id: int, days:
         "map_area",
     ]
     activities_df = activities_df[columns]
-    activities_df = activities_df[activities_df["sport_type"] == activity.sport_type]
+
+    activities_df = activities_df[activities_df["sport_type"] == activity["sport_type"]]
     activities_df = activities_df.dropna(axis=1, how="all")
 
-    # query api
     name_results = generate_activity_name_with_gemini(
         activity_id=activity_id,
         data=activities_df,
         number_of_options=3,
         api_key=os.environ["GEMINI_API_KEY"],
+        temperature=temperature,
+    )
+    logger.info(f"Name suggestions: {name_results}")
+
+    top_name_suggestion = name_results[0].name
+    top_name_description = name_results[0].description
+    logger.info(
+        f"Top name suggestion for activity {activity_id}: {top_name_suggestion}"
     )
 
-    # add name suggestions to the database
-    for result in name_results:
-        logger.info(f"Adding name suggestion for activity {activity_id}: {result.name}")
-        db.add_name_suggestion(
-            activity_id=activity_id,
-            name=result.name,
-            description=result.description,
-            probability=result.probability,
-        )
+    client.update_activity(
+        activity_id=activity_id,
+        name=top_name_suggestion,
+        description=gemini_named_description,
+    )
 
-
-def trigger_gha():
-    """Triggers a GitHub Actions workflow dispatch.
-
-    This function retrieves necessary environment variables (GITHUB_USER, REPO,
-    GITHUB_PAT, WORKFLOW_FILE) and uses them to construct the API endpoint for
-    triggering a workflow dispatch. It then sends a POST request to the GitHub API
-    with the required headers and data to initiate the workflow run.  The function
-    checks the response status code and prints a success or failure message
-    accordingly.
-
-    Raises:
-        KeyError: If any of the required environment variables are not set.
-        requests.exceptions.RequestException: If the API request fails.
-    """
-    # load_dotenv(override=True)
-
-    GITHUB_USER = os.environ.get("GITHUB_USER")
-    REPO = os.environ.get("REPO")
-    GITHUB_PAT = os.environ.get("GITHUB_PAT")
-    WORKFLOW_FILE = os.environ.get("WORKFLOW_FILE")
-    ENDPOINT = f"https://api.github.com/repos/{GITHUB_USER}/{REPO}/actions/workflows/{WORKFLOW_FILE}/dispatches"
-    REF = "master"
-
-    headers = {
-        "Authorization": f"Bearer {GITHUB_PAT}",
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Content-Type": "application/json",
-    }
-
-    data = {"ref": f"{REF}"}
-
-    response = requests.post(ENDPOINT, headers=headers, json=data)
-
-    if response.status_code == 204:
-        print("Workflow dispatch triggered successfully.")
-    else:
-        print(
-            f"Failed to trigger workflow dispatch. Status code: {response.status_code}, Response: {response.text}"
-        )
+    # notify via pushbullet
+    pb = Pushbullet(os.environ["PUSHBULLET_API_KEY"])
+    pb.push_note(title=top_name_suggestion, body=top_name_description)
 
 
 if __name__ == "__main__":
-    new_activity_created_workflow(athlete_id=1411289, activity_id=13449860689)
-    load_dotenv(override=True)
-    # query_name_suggestions_for_activity(athlete_id=1411289, activity_id=13751356765,days=365)
-
-    # load_all_historic_activities(
-    #     athlete_id=1411289,
-    #     after=datetime.datetime(2024, 1, 1),
-    #     before=datetime.datetime(2025, 3, 10),
-    # )
+    rename_workflow(activity_id=13770614816)

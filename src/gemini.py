@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 from google import genai
 import pandas as pd
 from pydantic import BaseModel
@@ -26,11 +27,16 @@ Given the following input:
 {input}
 
 [PROMPT]
-Provide {number_of_options} options for a name for the input activity that is consistent with the data. The names can have one or more emojis. For each name, explain why it was chosen.
+Provide {number_of_options} options for a name for the input activity that is consistent with the data. The names can have one or more emojis. For each name, explain in detail why it was chosen.
 """
 
+
 def generate_activity_name_with_gemini(
-    activity_id: int, data: pd.DataFrame, number_of_options: int, api_key: str
+    activity_id: int,
+    data: pd.DataFrame,
+    number_of_options: int,
+    api_key: str,
+    temperature: Optional[float] = None,
 ) -> list[NameResult]:
     input = data[data["id"] == activity_id].iloc[0]
     context_data = data.drop(data[data["id"] == activity_id].index)
@@ -50,7 +56,15 @@ def generate_activity_name_with_gemini(
         f.write(rendered_prompt)
 
     client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(model="gemini-2.0-flash", contents=rendered_prompt)
+    if temperature:
+        config = {"temperature": temperature}
+    else:
+        config = None
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=rendered_prompt,
+        config=config,
+    )
 
     # parse response
     formatted_results = "\n".join(response.text.strip().split("\n")[1:-1])
