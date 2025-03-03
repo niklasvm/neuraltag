@@ -38,7 +38,7 @@ def strava_webhook(content: dict):
                 content={"error": "Invalid activity or athlete ID"}, status_code=400
             )
 
-        trigger_gha(dict(activity_id=activity_id))
+        trigger_gha(dict(activity_id=str(activity_id)))
 
     return JSONResponse(content={"message": "Received webhook event"}, status_code=200)
 
@@ -133,5 +133,4 @@ def trigger_gha(inputs: dict) -> None:
 
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=8000)
