@@ -8,7 +8,7 @@ import pandas as pd
 
 from stravalib import Client
 
-from src.data.data import (
+from src.data import (
     fetch_activity_data,
     fetch_historic_activity_data,
     process_activity,
