@@ -79,9 +79,9 @@ def rename_workflow(activity_id: int):
         activity_id=activity_id,
     )
 
-    # if gemini_named_description in str(activity.description):
-    #     print(f"Activity {activity_id} already named with Gemini 🤖")
-    #     return
+    if gemini_named_description in str(activity.description):
+        print(f"Activity {activity_id} already named with Gemini 🤖")
+        return
 
     before = activity.start_date_local + datetime.timedelta(days=1)
     after = before - datetime.timedelta(days=days)
