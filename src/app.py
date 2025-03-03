@@ -83,7 +83,7 @@ async def authorization() -> RedirectResponse:
 
 @app.get(AUTHORIZATION_CALLBACK)
 async def login(code: str, scope: str) -> dict[str, str]:
-    from src.flows import login_user
+    from src.workflows import login_user
 
     athlete_id = login_user(code=code, scope=scope)
     return {"message": f"Logged in as athlete {athlete_id}"}
