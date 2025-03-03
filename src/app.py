@@ -129,8 +129,12 @@ def trigger_gha(inputs: dict) -> None:
         print(
             f"Failed to trigger workflow dispatch. Status code: {response.status_code}, Response: {response.text}"
         )
+        raise requests.exceptions.RequestException(
+            f"Failed to trigger workflow dispatch. Status code: {response.status_code}, Response: {response.text}"
+        )
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
