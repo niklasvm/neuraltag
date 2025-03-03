@@ -38,7 +38,7 @@ def strava_webhook(content: dict):
                 content={"error": "Invalid activity or athlete ID"}, status_code=400
             )
 
-        trigger_gha(dict(activity_id=activity_id))
+        trigger_gha(dict(activity_id=str(activity_id)))
 
     return JSONResponse(content={"message": "Received webhook event"}, status_code=200)
 
@@ -127,6 +127,9 @@ def trigger_gha(inputs: dict) -> None:
         print("Workflow dispatch triggered successfully.")
     else:
         print(
+            f"Failed to trigger workflow dispatch. Status code: {response.status_code}, Response: {response.text}"
+        )
+        raise requests.exceptions.RequestException(
             f"Failed to trigger workflow dispatch. Status code: {response.status_code}, Response: {response.text}"
         )
 
