@@ -35,10 +35,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install uv
           uv pip install . --system
+          uv pip install ./ --system
           
 
       - name: Run script
-        run: uv run python src/workflows.py --activity_id ${{ github.event.inputs.activity_id }}
+        run: python src/workflows.py --activity_id ${{ github.event.inputs.activity_id }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STRAVA_TOKEN: ${{ secrets.STRAVA_TOKEN }}
