@@ -1,11 +1,9 @@
 import os
 
-from dotenv import load_dotenv
 import requests
+from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse, RedirectResponse
-from stravalib import Client
-
 
 load_dotenv(override=True)
 
@@ -65,7 +63,7 @@ async def verify_strava_subscription(
 
 @app.get("/authorization")
 async def authorization() -> RedirectResponse:
-    # load_dotenv(override=True)
+    from stravalib import Client
 
     client = Client()
 
@@ -136,4 +134,4 @@ def trigger_gha(inputs: dict) -> None:
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
