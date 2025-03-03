@@ -18,8 +18,6 @@ from src.gemini import generate_activity_name_with_gemini
 from pushbullet import Pushbullet
 import argparse
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 def login_user(code: str, scope: str) -> int | None:
@@ -82,7 +80,7 @@ def rename_workflow(activity_id: int):
     )
 
     # if gemini_named_description in str(activity.description):
-    #     logger.info(f"Activity {activity_id} already named with Gemini 🤖")
+    #     print(f"Activity {activity_id} already named with Gemini 🤖")
     #     return
 
     before = activity.start_date_local + datetime.timedelta(days=1)
@@ -131,11 +129,11 @@ def rename_workflow(activity_id: int):
         api_key=os.environ["GEMINI_API_KEY"],
         temperature=temperature,
     )
-    logger.info(f"Name suggestions: {name_results}")
+    print(f"Name suggestions: {name_results}")
 
     top_name_suggestion = name_results[0].name
     top_name_description = name_results[0].description
-    logger.info(
+    print(
         f"Top name suggestion for activity {activity_id}: {top_name_suggestion}"
     )
 
