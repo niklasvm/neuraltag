@@ -1,24 +1,30 @@
+import logging
 import os
 
-import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse, RedirectResponse
+
+from src.workflows import rename_workflow
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 load_dotenv(override=True)
 
 app = FastAPI(openapi_url=None)
 # app = FastAPI()
 
+
 AUTHORIZATION_CALLBACK = "/login"
 
 
 @app.post("/webhook")
-def strava_webhook(content: dict):
+async def strava_webhook(content: dict):
     """
     Handles the webhook event from Strava.
     """
-    print(content)
 
     # Validate input to prevent injection attacks
     if not isinstance(content, dict):
@@ -38,7 +44,7 @@ def strava_webhook(content: dict):
                 content={"error": "Invalid activity or athlete ID"}, status_code=400
             )
 
-        trigger_gha(dict(activity_id=str(activity_id)))
+        rename_workflow(activity_id=activity_id)
 
     return JSONResponse(content={"message": "Received webhook event"}, status_code=200)
 
@@ -85,53 +91,6 @@ async def login(code: str, scope: str) -> dict[str, str]:
 
     athlete_id = login_user(code=code, scope=scope)
     return {"message": f"Logged in as athlete {athlete_id}"}
-
-
-def trigger_gha(inputs: dict) -> None:
-    """Triggers a GitHub Actions workflow dispatch.
-
-    This function retrieves necessary environment variables (GITHUB_USER, REPO,
-    GITHUB_PAT, WORKFLOW_FILE) and uses them to construct the API endpoint for
-    triggering a workflow dispatch. It then sends a POST request to the GitHub API
-    with the required headers and data to initiate the workflow run.  The function
-    checks the response status code and prints a success or failure message
-    accordingly.
-
-    Raises:
-        KeyError: If any of the required environment variables are not set.
-        requests.exceptions.RequestException: If the API request fails.
-    """
-
-    GITHUB_USER = os.environ.get("GITHUB_USER")
-    REPO = os.environ.get("REPO")
-    GITHUB_PAT = os.environ.get("GITHUB_PAT")
-    WORKFLOW_FILE = os.environ.get("WORKFLOW_FILE")
-    ENDPOINT = f"https://api.github.com/repos/{GITHUB_USER}/{REPO}/actions/workflows/{WORKFLOW_FILE}/dispatches"
-    REF = "master"
-
-    headers = {
-        "Authorization": f"Bearer {GITHUB_PAT}",
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Content-Type": "application/json",
-    }
-
-    data = {
-        "ref": f"{REF}",
-        "inputs": inputs,
-    }
-
-    response = requests.post(ENDPOINT, headers=headers, json=data)
-
-    if response.status_code == 204:
-        print("Workflow dispatch triggered successfully.")
-    else:
-        print(
-            f"Failed to trigger workflow dispatch. Status code: {response.status_code}, Response: {response.text}"
-        )
-        raise requests.exceptions.RequestException(
-            f"Failed to trigger workflow dispatch. Status code: {response.status_code}, Response: {response.text}"
-        )
 
 
 if __name__ == "__main__":

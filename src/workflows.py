@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 import pandas as pd
 
+import requests
 from stravalib import Client
 
 from src.data import (
@@ -18,6 +19,9 @@ from src.gemini import generate_activity_name_with_gemini
 from pushbullet import Pushbullet
 import argparse
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def login_user(code: str, scope: str) -> int | None:
@@ -80,7 +84,7 @@ def rename_workflow(activity_id: int):
     )
 
     if gemini_named_description in str(activity.description):
-        print(f"Activity {activity_id} already named with Gemini 🤖")
+        logger.info(f"Activity {activity_id} already named with Gemini 🤖")
         return
 
     before = activity.start_date_local + datetime.timedelta(days=1)
@@ -113,13 +117,14 @@ def rename_workflow(activity_id: int):
         "start_lng",
         "end_lat",
         "end_lng",
+        "pace_min_per_km",
         "map_centroid_lat",
         "map_centroid_lon",
         "map_area",
     ]
-    activities_df = activities_df[columns]
 
     activities_df = activities_df[activities_df["sport_type"] == activity["sport_type"]]
+    activities_df = activities_df[columns]
     activities_df = activities_df.dropna(axis=1, how="all")
 
     name_results = generate_activity_name_with_gemini(
@@ -129,11 +134,11 @@ def rename_workflow(activity_id: int):
         api_key=os.environ["GEMINI_API_KEY"],
         temperature=temperature,
     )
-    print(f"Name suggestions: {name_results}")
+    logger.info(f"Name suggestions: {name_results}")
 
     top_name_suggestion = name_results[0].name
     top_name_description = name_results[0].description
-    print(
+    logger.info(
         f"Top name suggestion for activity {activity_id}: {top_name_suggestion}"
     )
 
@@ -146,6 +151,53 @@ def rename_workflow(activity_id: int):
     # notify via pushbullet
     pb = Pushbullet(os.environ["PUSHBULLET_API_KEY"])
     pb.push_note(title=top_name_suggestion, body=top_name_description)
+
+
+def trigger_gha(inputs: dict) -> None:
+    """Triggers a GitHub Actions workflow dispatch.
+
+    This function retrieves necessary environment variables (GITHUB_USER, REPO,
+    GITHUB_PAT, WORKFLOW_FILE) and uses them to construct the API endpoint for
+    triggering a workflow dispatch. It then sends a POST request to the GitHub API
+    with the required headers and data to initiate the workflow run.  The function
+    checks the response status code and prints a success or failure message
+    accordingly.
+
+    Raises:
+        KeyError: If any of the required environment variables are not set.
+        requests.exceptions.RequestException: If the API request fails.
+    """
+
+    GITHUB_USER = os.environ.get("GITHUB_USER")
+    REPO = os.environ.get("REPO")
+    GITHUB_PAT = os.environ.get("GITHUB_PAT")
+    WORKFLOW_FILE = os.environ.get("WORKFLOW_FILE")
+    ENDPOINT = f"https://api.github.com/repos/{GITHUB_USER}/{REPO}/actions/workflows/{WORKFLOW_FILE}/dispatches"
+    REF = "master"
+
+    headers = {
+        "Authorization": f"Bearer {GITHUB_PAT}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Content-Type": "application/json",
+    }
+
+    data = {
+        "ref": f"{REF}",
+        "inputs": inputs,
+    }
+
+    response = requests.post(ENDPOINT, headers=headers, json=data)
+
+    if response.status_code == 204:
+        print("Workflow dispatch triggered successfully.")
+    else:
+        print(
+            f"Failed to trigger workflow dispatch. Status code: {response.status_code}, Response: {response.text}"
+        )
+        raise requests.exceptions.RequestException(
+            f"Failed to trigger workflow dispatch. Status code: {response.status_code}, Response: {response.text}"
+        )
 
 
 if __name__ == "__main__":
