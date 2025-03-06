@@ -4,14 +4,12 @@ source .env
 
 echo "Deploying to $REMOTE_HOST..."
 
-# deploy app and env files
+# deploy code
 echo "Deploying files..."
-sshpass -p $REMOTE_PASSWORD scp $ENV_FILE $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH
-sshpass -p $REMOTE_PASSWORD scp $APP_FILE $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH
-sshpass -p $REMOTE_PASSWORD scp $REQUIREMENTS_FILE $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH
+sshpass -p $REMOTE_PASSWORD rsync -avz -e ssh --exclude='.venv' --exclude .git --exclude uv.lock ./ $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/
 
-# create virtual environment
-# sshpass -p $REMOTE_PASSWORD ssh $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_PATH && uv venv && source .venv/bin/activate && uv pip install -r requirements.txt"
+# create virtual environment (this line is giving errors)
+# sshpass -p $REMOTE_PASSWORD ssh $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_PATH && uv sync"
 
 # deploy service file
 echo "Deploying service..."
@@ -20,12 +18,23 @@ sshpass -p $REMOTE_PASSWORD scp $SERVICE_FILE $REMOTE_USER@$REMOTE_HOST:/tmp/${S
 sshpass -p $REMOTE_PASSWORD ssh $REMOTE_USER@$REMOTE_HOST "sudo mv /tmp/${SERVICE_FILE_BASENAME} /etc/systemd/system/${SERVICE_FILE_BASENAME}"
 
 # reload daemon
+echo "Reloading daemon..."
 sshpass -p $REMOTE_PASSWORD ssh $REMOTE_USER@$REMOTE_HOST "sudo systemctl daemon-reload"
 
 # enable service to start on boot
+echo "Enabling service..."
 sshpass -p $REMOTE_PASSWORD ssh $REMOTE_USER@$REMOTE_HOST "sudo systemctl enable ${SERVICE_FILE_BASENAME}"
 
 # start service
+echo "Starting service..."
 sshpass -p $REMOTE_PASSWORD ssh $REMOTE_USER@$REMOTE_HOST "sudo systemctl start ${SERVICE_FILE_BASENAME}"
 
+# restart
+echo "Restarting service..."s
+sshpass -p $REMOTE_PASSWORD ssh $REMOTE_USER@$REMOTE_HOST "sudo systemctl restart ${SERVICE_FILE_BASENAME}"
+
 echo "Deployment complete"
+
+
+# logs: journalctl -u strava.service -f
+# logs: journalctl -u strava.service -n 1000 --no-pager
