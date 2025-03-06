@@ -36,5 +36,5 @@ sshpass -p $REMOTE_PASSWORD ssh $REMOTE_USER@$REMOTE_HOST "sudo systemctl restar
 echo "Deployment complete"
 
 
-# logs: journalctl -u strava.service -f
+# journalctl -u strava.service -f
 # logs: journalctl -u strava.service -n 1000 --no-pager
