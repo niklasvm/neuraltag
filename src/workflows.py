@@ -56,6 +56,8 @@ def login_user(code: str, scope: str) -> int | None:
 
 
 def rename_workflow(activity_id: int):
+    time_start = datetime.datetime.now()
+
     load_dotenv(override=True)
 
     days = 365
@@ -83,7 +85,10 @@ def rename_workflow(activity_id: int):
         activity_id=activity_id,
     )
 
-    if gemini_named_description in str(activity.description):
+    if (
+        gemini_named_description in str(activity.description)
+        and activity.name != "Rename"
+    ):
         logger.info(f"Activity {activity_id} already named with Gemini 🤖")
         return
 
@@ -142,6 +147,9 @@ def rename_workflow(activity_id: int):
         f"Top name suggestion for activity {activity_id}: {top_name_suggestion}"
     )
 
+    time_end = datetime.datetime.now()
+    duration_seconds = (time_end - time_start).total_seconds()
+    logger.info(f"Duration: {duration_seconds} seconds")
     client.update_activity(
         activity_id=activity_id,
         name=top_name_suggestion,

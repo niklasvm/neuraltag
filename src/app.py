@@ -25,7 +25,7 @@ async def strava_webhook(content: dict):
     """
     Handles the webhook event from Strava.
     """
-
+    logger.info(f"Received webhook event: {content}")
     # Validate input to prevent injection attacks
     if not isinstance(content, dict):
         return JSONResponse(
@@ -35,6 +35,11 @@ async def strava_webhook(content: dict):
     if (
         content.get("aspect_type") == "create"
         and content.get("object_type") == "activity"
+    ) or (
+        content.get("aspect_type") == "update"
+        and content.get("object_type") == "activity"
+        and "updates" in content
+        and content.get("updates").get("title") == "Rename"
     ):
         activity_id = content.get("object_id")
         athlete_id = content.get("owner_id")
