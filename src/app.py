@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse, RedirectResponse
 
+from src.db.db import StravaDatabase
 from src.workflows import rename_workflow
 
 logging.basicConfig(level=logging.INFO)
@@ -14,7 +15,6 @@ logger = logging.getLogger(__name__)
 load_dotenv(override=True)
 
 app = FastAPI(openapi_url=None)
-# app = FastAPI()
 
 
 AUTHORIZATION_CALLBACK = "/login"
@@ -54,7 +54,16 @@ async def strava_webhook(content: dict):
                 content={"error": "Invalid activity or athlete ID"}, status_code=400
             )
 
-        rename_workflow(activity_id=activity_id)
+        strava_db = StravaDatabase(os.environ["POSTGRES_CONNECTION_STRING"])
+        auth = strava_db.get_auth(athlete_id=athlete_id)
+        rename_workflow(
+            activity_id=activity_id,
+            access_token=auth.access_token,
+            refresh_token=auth.refresh_token,
+            expires_at=auth.expires_at,
+            client_id=os.environ["STRAVA_CLIENT_ID"],
+            client_secret=os.environ["STRAVA_CLIENT_SECRET"],
+        )
 
     return JSONResponse(content={"message": "Received webhook event"}, status_code=200)
 

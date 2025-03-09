@@ -1,5 +1,4 @@
 import datetime
-import json
 import logging
 import os
 
@@ -14,6 +13,7 @@ from src.data import (
     process_activity,
 )
 
+from src.db.db import StravaDatabase
 from src.gemini import generate_activity_name_with_gemini
 from pushbullet import Pushbullet
 
@@ -43,17 +43,33 @@ def login_user(code: str, scope: str):
     token_response["STRAVA_CLIENT_ID"] = os.environ["STRAVA_CLIENT_ID"]
     token_response["STRAVA_CLIENT_SECRET"] = os.environ["STRAVA_CLIENT_SECRET"]
 
-    with open("token.json", "w") as f:
-        json.dump(token_response, f)
-
     # get athlete
     client.access_token = access_token
     athlete = client.get_athlete()
 
-    return athlete.model_dump()
+    db = StravaDatabase(os.environ["POSTGRES_CONNECTION_STRING"])
+    db.add_athlete(
+        athlete=athlete,
+    )
+    db.add_auth(
+        access_token=access_token,
+        athlete_id=athlete.id,
+        refresh_token=token_response["refresh_token"],
+        expires_at=token_response["expires_at"],
+        scope=scope,
+    )
+
+    return athlete.id
 
 
-def rename_workflow(activity_id: int):
+def rename_workflow(
+    activity_id: int,
+    access_token: str,
+    refresh_token: str,
+    expires_at: int,
+    client_id: int,
+    client_secret: str,
+):
     time_start = datetime.datetime.now()
 
     load_dotenv(override=True)
@@ -63,19 +79,15 @@ def rename_workflow(activity_id: int):
 
     gemini_named_description = "automagically named with Gemini 🤖"
 
-    token = json.loads(os.environ["STRAVA_TOKEN"])
-    for key, value in token.items():
-        os.environ[key] = str(value)
-
     client = Client(
-        access_token=os.environ["access_token"],
-        refresh_token=os.environ["refresh_token"],
-        token_expires=os.environ["expires_at"],
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_expires=expires_at,
     )
     client.refresh_access_token(
-        client_id=os.environ["STRAVA_CLIENT_ID"],
-        client_secret=os.environ["STRAVA_CLIENT_SECRET"],
-        refresh_token=os.environ["refresh_token"],
+        client_id=client_id,
+        client_secret=client_secret,
+        refresh_token=refresh_token,
     )
 
     activity = fetch_activity_data(
