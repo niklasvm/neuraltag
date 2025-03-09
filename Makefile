@@ -30,4 +30,6 @@ docker-dev:
 	docker-compose run strava fastapi dev ./src/app.py --reload --host 0.0.0.0 --port 8000
 
 deploy:
+	uv run python cicd/deploy/modify_pyproject_toml.py
 	bash ./cicd/deploy/deploy.sh
+	git checkout pyproject.toml

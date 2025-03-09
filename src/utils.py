@@ -1,6 +1,7 @@
 
+from pprint import pp
 import requests
-
+import toml
 
 def trigger_gha(
     inputs: dict,
@@ -49,3 +50,24 @@ def trigger_gha(
         raise requests.exceptions.RequestException(
             f"Failed to trigger workflow dispatch. Status code: {response.status_code}, Response: {response.text}"
         )
+    
+
+def generate_rpi_pyproject_toml(pyproject_toml:str):
+    # load
+    with open(pyproject_toml, "r") as f:
+        data = toml.load(f)
+
+    # remove dev dependencies
+    del data["dependency-groups"]["dev"]
+
+    # add piwheels index
+    data["tool"]["uv"]["index"] = [{"url": "https://www.piwheels.org/simple"}]
+
+    # write
+    with open(pyproject_toml, "w") as f:
+        toml.dump(data, f, encoder=toml.TomlPreserveInlineDictEncoder())
+
+
+if __name__ == "__main__":
+    generate_rpi_pyproject_toml("pyproject.toml")
+
