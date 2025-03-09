@@ -6,12 +6,14 @@ import pandas as pd
 
 from stravalib import Client
 
+from src.app.db.models import Athlete
 from src.data import (
     fetch_activity_data,
     fetch_historic_activity_data,
     process_activity,
 )
 
+from src.app.db.adapter import Database
 from src.gemini import generate_activity_name_with_gemini
 from pushbullet import Pushbullet
 
