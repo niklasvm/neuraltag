@@ -8,9 +8,6 @@ echo "Deploying to $REMOTE_HOST..."
 echo "Deploying files..."
 sshpass -p $REMOTE_PASSWORD rsync -avz -e ssh --exclude='.venv' --exclude .git --exclude uv.lock ./ $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/
 
-# create virtual environment (this line is giving errors)
-# sshpass -p $REMOTE_PASSWORD ssh $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_PATH && uv sync"
-
 # deploy service file
 echo "Deploying service..."
 SERVICE_FILE_BASENAME=$(basename $SERVICE_FILE)
