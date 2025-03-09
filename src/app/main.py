@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Query, Request, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 from src.app.pages import home
 from src.app.schemas.login_request import LoginRequest
@@ -38,7 +38,7 @@ class Settings(BaseModel):
     application_url: str
     postgres_connection_string: str
 
-    @validator("*")
+    @field_validator("*")
     def not_empty(cls, value):
         if not value:
             raise ValueError("Field cannot be empty")
@@ -101,24 +101,6 @@ async def login(
     return RedirectResponse(url=f"/welcome?uuid={uuid}")
 
 
-@app.get("/welcome", response_class=HTMLResponse)
-async def welcome(request: Request, uuid: str):
-    db = Database(settings.postgres_connection_string)
-
-    try:
-        athlete = db.get_athlete(uuid)
-        if athlete is None:
-            return templates.TemplateResponse(
-                request, "error.html", {"error": "Athlete not found"}
-            )  # Provide error message
-        return templates.TemplateResponse(request, "welcome.html", {"athlete": athlete})
-    except Exception:
-        logger.exception(f"Error fetching athlete with UUID {uuid}:")
-        raise HTTPException(
-            status_code=500, detail="Failed to retrieve athlete data"
-        )  # Use HTTPException
-
-
 @app.post("/webhook")
 async def handle_post_event(
     content: WebhookPostRequest, background_tasks: BackgroundTasks
@@ -155,3 +137,21 @@ async def verify_strava_subscription(
         )
     else:
         raise HTTPException(status_code=400, detail="Verification failed")
+
+
+@app.get("/welcome", response_class=HTMLResponse)
+async def welcome(request: Request, uuid: str):
+    db = Database(settings.postgres_connection_string)
+
+    try:
+        athlete = db.get_athlete(uuid)
+        if athlete is None:
+            return templates.TemplateResponse(
+                request, "error.html", {"error": "Athlete not found"}
+            )  # Provide error message
+        return templates.TemplateResponse(request, "welcome.html", {"athlete": athlete})
+    except Exception:
+        logger.exception(f"Error fetching athlete with UUID {uuid}:")
+        raise HTTPException(
+            status_code=500, detail="Failed to retrieve athlete data"
+        )  # Use HTTPException
