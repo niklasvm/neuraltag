@@ -20,6 +20,11 @@ app = FastAPI(openapi_url=None)
 AUTHORIZATION_CALLBACK = "/login"
 
 
+@app.get("/")
+async def root() -> JSONResponse:
+    return JSONResponse(content={"status": "ok"})
+
+
 @app.post("/webhook")
 async def strava_webhook(content: dict):
     """
@@ -101,4 +106,4 @@ async def login(code: str, scope: str) -> dict[str, str]:
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)
