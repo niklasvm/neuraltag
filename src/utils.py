@@ -3,7 +3,7 @@ import requests
 import toml
 import jinja2 as j2
 
-from src.db.db import StravaDatabase
+from src.app.db.adapter import Database
 
 
 def trigger_gha(
@@ -72,9 +72,7 @@ def generate_rpi_pyproject_toml(pyproject_toml: str):
 
 
 def render_welcome_page(athlete_id):
-    athlete = StravaDatabase(os.environ["POSTGRES_CONNECTION_STRING"]).get_athlete(
-        athlete_id
-    )
+    athlete = Database(os.environ["POSTGRES_CONNECTION_STRING"]).get_athlete(athlete_id)
 
     template = "/Users/niklasvonmaltzahn/Documents/personal/strava/src/welcome.html.j2"
     with open(template) as f:

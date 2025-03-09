@@ -13,7 +13,7 @@ from src.data import (
     process_activity,
 )
 
-from src.db.db import StravaDatabase
+from src.app.db.adapter import Database
 from src.gemini import generate_activity_name_with_gemini
 from pushbullet import Pushbullet
 
@@ -47,7 +47,7 @@ def login_user(code: str, scope: str):
     client.access_token = access_token
     athlete = client.get_athlete()
 
-    db = StravaDatabase(os.environ["POSTGRES_CONNECTION_STRING"])
+    db = Database(os.environ["POSTGRES_CONNECTION_STRING"])
     db.add_athlete(athlete)
     db.add_auth(
         access_token=access_token,

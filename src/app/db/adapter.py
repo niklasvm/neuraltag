@@ -2,18 +2,16 @@ import datetime
 import logging
 from sqlalchemy import create_engine
 
-# from src.db.models import Activity, Auth, Base
 from sqlalchemy.orm import sessionmaker
 
-from src.db.models import Auth, Base, Athlete
+from src.app.db.models import Auth, Base, Athlete
 from stravalib.model import SummaryAthlete
-# from src.db.models import Athlete, Map, NameSuggestion
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class StravaDatabase:
+class Database:
     def __init__(self, connection_string: str):
         engine = create_engine(connection_string)
         Base.metadata.create_all(engine)  # create the tables.
