@@ -5,7 +5,7 @@ After=network.target
 [Service]
 User=pi
 WorkingDirectory=/home/pi/app
-ExecStart=/home/pi/app/.venv/bin/python /home/pi/app/src/app.py
+ExecStart=/home/pi/app/.venv/bin/fastapi run /home/pi/app/src/app/main.py --host 127.0.0.1 --port 8000
 Restart=always
 StandardOutput=journal
 StandardError=journal

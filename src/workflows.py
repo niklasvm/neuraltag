@@ -1,19 +1,19 @@
 import datetime
-import json
 import logging
 import os
 
-from dotenv import load_dotenv
 import pandas as pd
 
 from stravalib import Client
 
+from src.app.db.models import Athlete
 from src.data import (
     fetch_activity_data,
     fetch_historic_activity_data,
     process_activity,
 )
 
+from src.app.db.adapter import Database
 from src.gemini import generate_activity_name_with_gemini
 from pushbullet import Pushbullet
 
@@ -22,14 +22,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def login_user(code: str, scope: str):
+def login_user(code: str, scope: str) -> Athlete:
     """Exchanges a Strava authorization code for an access token, retrieves the athlete's information, and stores the authentication details and athlete data in a database.
     Args:
         code (str): The Strava authorization code received from the user.
         scope (str): The scope of the authorization.
     """
-
-    # load_dotenv(override=True)
 
     # exchange code for token
     client = Client()
@@ -43,39 +41,53 @@ def login_user(code: str, scope: str):
     token_response["STRAVA_CLIENT_ID"] = os.environ["STRAVA_CLIENT_ID"]
     token_response["STRAVA_CLIENT_SECRET"] = os.environ["STRAVA_CLIENT_SECRET"]
 
-    with open("token.json", "w") as f:
-        json.dump(token_response, f)
-
     # get athlete
     client.access_token = access_token
     athlete = client.get_athlete()
 
-    return athlete.model_dump()
+    db = Database(os.environ["POSTGRES_CONNECTION_STRING"])
+
+    # add/update athlete to database
+    uuid = db.add_athlete(athlete)
+
+    # add/update auth to database
+    db.add_auth(
+        access_token=access_token,
+        athlete_id=athlete.id,
+        refresh_token=token_response["refresh_token"],
+        expires_at=token_response["expires_at"],
+        scope=scope,
+    )
+
+    athlete = db.get_athlete(uuid)
+
+    return athlete
 
 
-def rename_workflow(activity_id: int):
+def rename_workflow(
+    activity_id: int,
+    access_token: str,
+    refresh_token: str,
+    expires_at: int,
+    client_id: int,
+    client_secret: str,
+):
     time_start = datetime.datetime.now()
-
-    load_dotenv(override=True)
 
     days = 365
     temperature = 2
 
     gemini_named_description = "automagically named with Gemini 🤖"
 
-    token = json.loads(os.environ["STRAVA_TOKEN"])
-    for key, value in token.items():
-        os.environ[key] = str(value)
-
     client = Client(
-        access_token=os.environ["access_token"],
-        refresh_token=os.environ["refresh_token"],
-        token_expires=os.environ["expires_at"],
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_expires=expires_at,
     )
     client.refresh_access_token(
-        client_id=os.environ["STRAVA_CLIENT_ID"],
-        client_secret=os.environ["STRAVA_CLIENT_SECRET"],
-        refresh_token=os.environ["refresh_token"],
+        client_id=client_id,
+        client_secret=client_secret,
+        refresh_token=refresh_token,
     )
 
     activity = fetch_activity_data(
