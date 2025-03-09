@@ -48,9 +48,7 @@ def login_user(code: str, scope: str):
     athlete = client.get_athlete()
 
     db = StravaDatabase(os.environ["POSTGRES_CONNECTION_STRING"])
-    db.add_athlete(
-        athlete=athlete,
-    )
+    db.add_athlete(athlete)
     db.add_auth(
         access_token=access_token,
         athlete_id=athlete.id,
@@ -59,7 +57,7 @@ def login_user(code: str, scope: str):
         scope=scope,
     )
 
-    return athlete.id
+    return athlete
 
 
 def rename_workflow(

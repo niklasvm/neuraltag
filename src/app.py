@@ -3,9 +3,10 @@ import os
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from src.db.db import StravaDatabase
+from src.utils import render_welcome_page
 from src.workflows import rename_workflow
 
 logging.basicConfig(level=logging.INFO)
@@ -108,8 +109,17 @@ async def authorization() -> RedirectResponse:
 async def login(code: str, scope: str) -> dict[str, str]:
     from src.workflows import login_user
 
-    athlete_id = login_user(code=code, scope=scope)
-    return {"message": f"Logged in as athlete {athlete_id}"}
+    athlete = login_user(code=code, scope=scope)
+
+    return RedirectResponse(url=f"/welcome?id={athlete.id}")
+
+
+@app.get("/welcome")
+async def welcome(id: int) -> HTMLResponse:
+    """
+    Displays a welcome page with the athlete's information.
+    """
+    return HTMLResponse(content=render_welcome_page(id))
 
 
 if __name__ == "__main__":
