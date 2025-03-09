@@ -174,3 +174,5 @@ token.json
 data/
 blog.md
 cicd/deploy/testing.sh
+*.env
+private/

@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def login_user(code: str, scope: str) -> int | None:
+def login_user(code: str, scope: str):
     """Exchanges a Strava authorization code for an access token, retrieves the athlete's information, and stores the authentication details and athlete data in a database.
     Args:
         code (str): The Strava authorization code received from the user.
@@ -52,7 +52,7 @@ def login_user(code: str, scope: str) -> int | None:
     client.access_token = access_token
     athlete = client.get_athlete()
 
-    return athlete.id
+    return athlete.model_dump()
 
 
 def rename_workflow(activity_id: int):
@@ -159,62 +159,3 @@ def rename_workflow(activity_id: int):
     # notify via pushbullet
     pb = Pushbullet(os.environ["PUSHBULLET_API_KEY"])
     pb.push_note(title=top_name_suggestion, body=top_name_description)
-
-
-def trigger_gha(inputs: dict) -> None:
-    """Triggers a GitHub Actions workflow dispatch.
-
-    This function retrieves necessary environment variables (GITHUB_USER, REPO,
-    GITHUB_PAT, WORKFLOW_FILE) and uses them to construct the API endpoint for
-    triggering a workflow dispatch. It then sends a POST request to the GitHub API
-    with the required headers and data to initiate the workflow run.  The function
-    checks the response status code and prints a success or failure message
-    accordingly.
-
-    Raises:
-        KeyError: If any of the required environment variables are not set.
-        requests.exceptions.RequestException: If the API request fails.
-    """
-
-    GITHUB_USER = os.environ.get("GITHUB_USER")
-    REPO = os.environ.get("REPO")
-    GITHUB_PAT = os.environ.get("GITHUB_PAT")
-    WORKFLOW_FILE = os.environ.get("WORKFLOW_FILE")
-    ENDPOINT = f"https://api.github.com/repos/{GITHUB_USER}/{REPO}/actions/workflows/{WORKFLOW_FILE}/dispatches"
-    REF = "master"
-
-    headers = {
-        "Authorization": f"Bearer {GITHUB_PAT}",
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Content-Type": "application/json",
-    }
-
-    data = {
-        "ref": f"{REF}",
-        "inputs": inputs,
-    }
-
-    response = requests.post(ENDPOINT, headers=headers, json=data)
-
-    if response.status_code == 204:
-        print("Workflow dispatch triggered successfully.")
-    else:
-        print(
-            f"Failed to trigger workflow dispatch. Status code: {response.status_code}, Response: {response.text}"
-        )
-        raise requests.exceptions.RequestException(
-            f"Failed to trigger workflow dispatch. Status code: {response.status_code}, Response: {response.text}"
-        )
-
-
-if __name__ == "__main__":
-    # get arg from command line
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--activity_id", type=int, required=True, help="Strava activity ID"
-    )
-    args = parser.parse_args()
-
-    rename_workflow(activity_id=args.activity_id)
