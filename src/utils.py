@@ -1,7 +1,6 @@
-
-from pprint import pp
 import requests
 import toml
+
 
 def trigger_gha(
     inputs: dict,
@@ -50,9 +49,9 @@ def trigger_gha(
         raise requests.exceptions.RequestException(
             f"Failed to trigger workflow dispatch. Status code: {response.status_code}, Response: {response.text}"
         )
-    
 
-def generate_rpi_pyproject_toml(pyproject_toml:str):
+
+def generate_rpi_pyproject_toml(pyproject_toml: str):
     # load
     with open(pyproject_toml, "r") as f:
         data = toml.load(f)
@@ -70,4 +69,3 @@ def generate_rpi_pyproject_toml(pyproject_toml:str):
 
 if __name__ == "__main__":
     generate_rpi_pyproject_toml("pyproject.toml")
-

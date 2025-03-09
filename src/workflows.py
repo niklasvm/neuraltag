@@ -6,7 +6,6 @@ import os
 from dotenv import load_dotenv
 import pandas as pd
 
-import requests
 from stravalib import Client
 
 from src.data import (
@@ -17,7 +16,6 @@ from src.data import (
 
 from src.gemini import generate_activity_name_with_gemini
 from pushbullet import Pushbullet
-import argparse
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

@@ -1,8 +1,8 @@
 all: format lint_tests unit_tests
 
 format:
-	ruff check --fix src tests
-	ruff format ./src tests
+	ruff check --fix ./
+	ruff format ./
 
 lint_tests:
 	ruff check src tests
