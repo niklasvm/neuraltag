@@ -2,14 +2,12 @@ import datetime
 import logging
 from typing import Optional
 from sqlalchemy import create_engine
-from src.data.models import Activity, Auth, Base
+from src.db.models import Activity, Auth, Base
 from sqlalchemy.orm import sessionmaker
 import polyline
 from shapely.geometry import Polygon
 from stravalib.model import SummaryActivity, SummaryAthlete
-from src.data.models import Athlete, Map, NameSuggestion
-
-db_file = "/Users/niklasvonmaltzahn/Documents/personal/strava/data/strava.db"
+from src.db.models import Athlete, Map, NameSuggestion
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
