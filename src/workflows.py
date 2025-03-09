@@ -2,7 +2,6 @@ import datetime
 import logging
 import os
 
-from dotenv import load_dotenv
 import pandas as pd
 
 from stravalib import Client
@@ -29,8 +28,6 @@ def login_user(code: str, scope: str) -> Athlete:
         code (str): The Strava authorization code received from the user.
         scope (str): The scope of the authorization.
     """
-
-    # load_dotenv(override=True)
 
     # exchange code for token
     client = Client()
@@ -76,8 +73,6 @@ def rename_workflow(
     client_secret: str,
 ):
     time_start = datetime.datetime.now()
-
-    load_dotenv(override=True)
 
     days = 365
     temperature = 2

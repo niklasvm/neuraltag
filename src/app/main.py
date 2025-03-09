@@ -1,6 +1,7 @@
 import logging
 import os
 from typing import Annotated
+from dotenv import load_dotenv
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -12,6 +13,7 @@ from src.app.schemas.webhook_post_request import WebhookPostRequest
 from src.app.db.adapter import Database
 from src.workflows import rename_workflow  # Import your route modules
 
+load_dotenv(override=True)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -121,7 +123,7 @@ async def verify_strava_subscription(
     """
     Handles the webhook verification request from Strava.
     """
-    # load_dotenv(override=True)
+
     if (
         webhook_get_request.hub_mode == "subscribe"
         and webhook_get_request.hub_verify_token
