@@ -59,16 +59,16 @@ async def login(
     scope = login_request.scope
 
     athlete = login_user(code=code, scope=scope)
-    id = athlete.id
+    uuid = athlete.uuid
 
-    return RedirectResponse(url=f"/welcome?id={id}")
+    return RedirectResponse(url=f"/welcome?uuid={uuid}")
 
 
 @app.get("/welcome", response_class=HTMLResponse)
-async def welcome(request: Request, id: int):
+async def welcome(request: Request, uuid: str):
     db = Database(os.environ["POSTGRES_CONNECTION_STRING"])
 
-    athlete = db.get_athlete(id)
+    athlete = db.get_athlete(uuid)
     if athlete is None:
         return templates.TemplateResponse(
             "error.html", {"request": request, "athlete": athlete}

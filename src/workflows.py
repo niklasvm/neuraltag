@@ -7,6 +7,7 @@ import pandas as pd
 
 from stravalib import Client
 
+from src.app.db.models import Athlete
 from src.data import (
     fetch_activity_data,
     fetch_historic_activity_data,
@@ -22,7 +23,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def login_user(code: str, scope: str):
+def login_user(code: str, scope: str) -> Athlete:
     """Exchanges a Strava authorization code for an access token, retrieves the athlete's information, and stores the authentication details and athlete data in a database.
     Args:
         code (str): The Strava authorization code received from the user.
@@ -48,7 +49,11 @@ def login_user(code: str, scope: str):
     athlete = client.get_athlete()
 
     db = Database(os.environ["POSTGRES_CONNECTION_STRING"])
-    db.add_athlete(athlete)
+
+    # add/update athlete to database
+    uuid = db.add_athlete(athlete)
+
+    # add/update auth to database
     db.add_auth(
         access_token=access_token,
         athlete_id=athlete.id,
@@ -56,6 +61,8 @@ def login_user(code: str, scope: str):
         expires_at=token_response["expires_at"],
         scope=scope,
     )
+
+    athlete = db.get_athlete(uuid)
 
     return athlete
 

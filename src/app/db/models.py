@@ -1,5 +1,7 @@
 from __future__ import annotations
+import uuid
 from sqlalchemy import (
+    UUID,
     Column,
     Integer,
     String,
@@ -13,15 +15,11 @@ from sqlalchemy.orm import relationship
 Base = declarative_base()
 
 
-class ToDictMixin:
-    def to_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-
-
 class Athlete(Base):
     __tablename__ = "athletes"
 
-    id = Column(Integer, primary_key=True)
+    uuid = Column(UUID, primary_key=True, default=uuid.uuid4)
+    athlete_id = Column(Integer, unique=True)
     resource_state = Column(Integer)
     firstname = Column(String)
     lastname = Column(String)
@@ -36,24 +34,26 @@ class Athlete(Base):
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
 
-    inserted_at = Column(DateTime)
-
-    # activities = relationship("Activity", back_populates="athlete")
     auth = relationship("Auth", uselist=False, back_populates="athlete")
 
 
 class Auth(Base):
     __tablename__ = "auth"
-    id = Column(Integer, primary_key=True)
+    uuid = Column(UUID, primary_key=True, default=uuid.uuid4)
     access_token = Column(String)
     refresh_token = Column(String)
     expires_at = Column(Integer)
     scope = Column(String)
-    athlete_id = Column(Integer, ForeignKey("athletes.id"))
+    athlete_id = Column(Integer, ForeignKey("athletes.athlete_id"))
     athlete = relationship(Athlete.__name__, back_populates="auth")
 
-    inserted_at = Column(DateTime)
+    created_at = Column(DateTime)
     updated_at = Column(DateTime)
+
+
+class ToDictMixin:
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 # class Activity(Base, ToDictMixin):

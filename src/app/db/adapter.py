@@ -1,5 +1,6 @@
 import datetime
 import logging
+import uuid
 from sqlalchemy import create_engine
 
 from sqlalchemy.orm import sessionmaker
@@ -17,6 +18,37 @@ class Database:
         Base.metadata.create_all(engine)  # create the tables.
         Session = sessionmaker(bind=engine)
         self.session = Session()
+
+    def add_athlete(self, athlete: SummaryAthlete):
+        found_athlete = (
+            self.session.query(Athlete).filter(Athlete.athlete_id == athlete.id).first()
+        )
+        if not found_athlete:
+            id = str(uuid.uuid4())
+            kwargs = {
+                k: v
+                for k, v in athlete.__dict__.items()
+                if k in Athlete.__table__.columns.keys()
+            }
+
+            kwargs["created_at"] = datetime.datetime.now()
+            kwargs["updated_at"] = datetime.datetime.now()
+            kwargs["athlete_id"] = athlete.id
+
+            kwargs["uuid"] = id
+            del kwargs["id"]
+            athlete_model = Athlete(**kwargs)
+            self.session.add(athlete_model)
+            self.session.commit()
+            logger.info(f"Added athlete {athlete.id} to the database")
+
+            return id
+        else:
+            logger.info(f"Athlete with id {athlete.id} already exists in the database")
+            return found_athlete.uuid
+
+    def get_athlete(self, uuid: str) -> Athlete:
+        return self.session.query(Athlete).filter(Athlete.uuid == uuid).first()
 
     def add_auth(
         self,
@@ -41,12 +73,13 @@ class Database:
 
         else:
             auth = Auth(
+                uuid=str(uuid.uuid4()),
                 athlete_id=athlete_id,
                 access_token=access_token,
                 refresh_token=refresh_token,
                 expires_at=expires_at,
                 scope=scope,
-                inserted_at=datetime.datetime.now(),
+                created_at=datetime.datetime.now(),
                 updated_at=datetime.datetime.now(),
             )
             self.session.add(auth)
@@ -55,27 +88,6 @@ class Database:
 
     def get_auth(self, athlete_id: int) -> Auth:
         return self.session.query(Auth).filter(Auth.athlete_id == athlete_id).first()
-
-    def add_athlete(self, athlete: SummaryAthlete):
-        if not self.session.query(Athlete).filter(Athlete.id == athlete.id).first():
-            kwargs = {
-                k: v
-                for k, v in athlete.__dict__.items()
-                if k in Athlete.__table__.columns.keys()
-            }
-
-            kwargs["inserted_at"] = datetime.datetime.now()
-            kwargs["updated_at"] = datetime.datetime.now()
-
-            athlete_model = Athlete(**kwargs)
-            self.session.add(athlete_model)
-            self.session.commit()
-            logger.info(f"Added athlete {athlete.id} to the database")
-        else:
-            logger.info(f"Athlete with id {athlete.id} already exists in the database")
-
-    def get_athlete(self, athlete_id: int) -> Athlete:
-        return self.session.query(Athlete).filter(Athlete.id == athlete_id).first()
 
     # def add_activity(self, activity: SummaryActivity):
     #     activity_dict = activity.model_dump()
