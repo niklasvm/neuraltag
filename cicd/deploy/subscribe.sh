@@ -20,5 +20,5 @@ curl -G https://www.strava.com/api/v3/push_subscriptions \
 
 
 # delete subscription
-ID=""
+ID=
 curl -X DELETE "https://www.strava.com/api/v3/push_subscriptions/${ID}?client_id=${STRAVA_CLIENT_ID}&client_secret=${STRAVA_CLIENT_SECRET}"
