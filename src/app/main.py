@@ -4,6 +4,7 @@ from typing import Annotated
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query, Request, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, field_validator
 
@@ -29,6 +30,8 @@ templates = Jinja2Templates(directory="src/app/templates")  # Configure Jinja2
 
 # Include your route handlers
 app.include_router(home.router)
+app.mount("/static", StaticFiles(directory="src/app/static"), name="static")
+
 
 
 class Settings(BaseModel):
