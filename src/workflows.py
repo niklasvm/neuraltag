@@ -22,48 +22,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def login_user(code: str, scope: str) -> Athlete:
-    """Exchanges a Strava authorization code for an access token, retrieves the athlete's information, and stores the authentication details and athlete data in a database.
-    Args:
-        code (str): The Strava authorization code received from the user.
-        scope (str): The scope of the authorization.
-    """
-
-    # exchange code for token
-    client = Client()
-    token_response = client.exchange_code_for_token(
-        client_id=os.environ["STRAVA_CLIENT_ID"],
-        client_secret=os.environ["STRAVA_CLIENT_SECRET"],
-        code=code,
-    )
-    access_token = token_response["access_token"]
-
-    token_response["STRAVA_CLIENT_ID"] = os.environ["STRAVA_CLIENT_ID"]
-    token_response["STRAVA_CLIENT_SECRET"] = os.environ["STRAVA_CLIENT_SECRET"]
-
-    # get athlete
-    client.access_token = access_token
-    athlete = client.get_athlete()
-
-    db = Database(os.environ["POSTGRES_CONNECTION_STRING"])
-
-    # add/update athlete to database
-    uuid = db.add_athlete(athlete)
-
-    # add/update auth to database
-    db.add_auth(
-        access_token=access_token,
-        athlete_id=athlete.id,
-        refresh_token=token_response["refresh_token"],
-        expires_at=token_response["expires_at"],
-        scope=scope,
-    )
-
-    athlete = db.get_athlete(uuid)
-
-    return athlete
-
-
 def rename_workflow(
     activity_id: int,
     access_token: str,
