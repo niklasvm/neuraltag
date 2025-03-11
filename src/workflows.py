@@ -4,16 +4,15 @@ import os
 
 import pandas as pd
 
-from stravalib import Client
 
 from src.data import (
-    fetch_activity_data,
-    fetch_historic_activity_data,
     process_activity,
 )
 
 from src.gemini import generate_activity_name_with_gemini
 from pushbullet import Pushbullet
+
+from src.strava import fetch_activity_data, fetch_historic_activity_data, get_strava_client
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -35,15 +34,12 @@ def rename_workflow(
 
     gemini_named_description = "automagically named with Gemini 🤖"
 
-    client = Client(
+    client = get_strava_client(
         access_token=access_token,
         refresh_token=refresh_token,
-        token_expires=expires_at,
-    )
-    client.refresh_access_token(
-        client_id=client_id,
-        client_secret=client_secret,
-        refresh_token=refresh_token,
+        expires_at=expires_at,
+        strava_client_id=client_id,
+        strava_client_secret=client_secret,
     )
 
     activity = fetch_activity_data(

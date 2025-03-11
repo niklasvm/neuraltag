@@ -1,23 +1,7 @@
-import datetime
 import polyline
-from stravalib.model import DetailedActivity, SummaryActivity
+from stravalib.model import SummaryActivity
 from typing import Any
 from shapely.geometry import Polygon
-from stravalib import Client
-
-
-def fetch_historic_activity_data(
-    client: Client, after: datetime.datetime, before: datetime.datetime
-) -> list[SummaryActivity]:
-    activities = client.get_activities(after=after, before=before)
-    activities = [x for x in activities]
-
-    return activities
-
-
-def fetch_activity_data(client: Client, activity_id: int) -> DetailedActivity:
-    activity = client.get_activity(activity_id)
-    return activity
 
 
 def process_activity(activity: SummaryActivity) -> dict[str, Any]:
