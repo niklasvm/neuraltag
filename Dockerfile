@@ -1,9 +1,15 @@
-FROM python:3.11-bookworm
+FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+RUN apt-get update && apt-get install -y curl
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir uv
+    pip install uv
 
 
 ENV UV_PROJECT_ENVIRONMENT="/uv_venv/"
@@ -16,4 +22,3 @@ COPY ../../ ./
 RUN uv sync --frozen
 
 EXPOSE 8000
-
