@@ -43,41 +43,41 @@ jobs:
             coverageFile: coverage.xml
             token: ${{ secrets.GITHUB_TOKEN }}
 
-  # docker_build_only:
-  #   name: Build docker image
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: Install dependencies
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         pip install uv
-  #     - name: Build the Docker image
-  #       run: |
-  #         uv pip compile pyproject.toml -o requirements.txt
-  #         docker build . -t ghcr.io/${{ github.repository }}:latest
-
-  docker_build_armv7:
-    name: Build docker image for armv7
+  docker_build_only:
+    name: Build docker image
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
-      
-      - name: Install Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1.11.0
-        with:
-            toolchain: stable
-      
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install uv
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
       - name: Build the Docker image
         run: |
-          uv run python cicd/deploy/modify_pyproject_toml.py
-          docker buildx build --platform linux/arm/v7 . -t ghcr.io/${{ github.repository }}:latest
+          uv pip compile pyproject.toml -o requirements.txt
+          docker build . -t ghcr.io/${{ github.repository }}:latest
+
+  # docker_build_armv7:
+  #   name: Build docker image for armv7
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+      
+  #     - name: Install Rust toolchain
+  #       uses: actions-rust-lang/setup-rust-toolchain@v1.11.0
+  #       with:
+  #           toolchain: stable
+      
+  #     - name: Install dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install uv
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v3
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
+  #     - name: Build the Docker image
+  #       run: |
+  #         uv run python cicd/deploy/modify_pyproject_toml.py
+  #         docker buildx build --platform linux/arm/v7 . -t ghcr.io/${{ github.repository }}:latest
