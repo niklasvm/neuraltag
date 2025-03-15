@@ -3,7 +3,7 @@ FROM python:3.11-slim-bookworm
 WORKDIR /app
 
 
-RUN pip install uv==0.6.0 --index-url https://www.piwheels.org/simple
+RUN pip install uv==0.6.3
 
 
 ENV UV_PROJECT_ENVIRONMENT="/uv_venv/"
