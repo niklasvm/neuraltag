@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install uv==0.6.3
+RUN pip uninstall numpy && \
+    pip install uv==0.6.3
 
 
 ENV UV_PROJECT_ENVIRONMENT="/uv_venv/"
