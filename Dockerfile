@@ -1,4 +1,5 @@
-FROM python:3.11-slim-bookworm
+ARG BASE_IMAGE=python:3.11-slim-bookworm
+FROM ${BASE_IMAGE}
 
 WORKDIR /app
 

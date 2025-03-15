@@ -56,3 +56,18 @@ jobs:
         run: |
           uv pip compile pyproject.toml -o requirements.txt
           docker build . -t ghcr.io/${{ github.repository }}:latest
+
+  docker_build_armv7:
+    name: Build docker image
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv
+      - name: Build the Docker image for ARMv7
+        run: |
+          uv run python cicd/deploy/modify_pyproject_toml.py
+          docker build . -t ghcr.io/${{ github.repository }}:armv7 --build-arg BASE_IMAGE=arm32v7/python:3.11-slim-bookworm
