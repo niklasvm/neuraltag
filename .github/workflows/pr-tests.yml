@@ -58,8 +58,8 @@ jobs:
   #         uv pip compile pyproject.toml -o requirements.txt
   #         docker build . -t ghcr.io/${{ github.repository }}:latest
 
-  docker_build_armv6:
-    name: Build docker image for armv6
+  docker_build_armv7:
+    name: Build docker image for armv7
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
