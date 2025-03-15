@@ -16,7 +16,6 @@ def process_login_event(
         strava_client_id=client_id, strava_client_secret=client_secret, code=code
     )
 
-
     db = Database(postgres_connection_string)
 
     # add/update athlete to database

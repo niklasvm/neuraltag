@@ -3,10 +3,9 @@ import datetime
 from stravalib.model import DetailedActivity, SummaryActivity, SummaryAthlete
 
 
-
 def exchange_code_for_athlete_and_token(
     strava_client_id: int, strava_client_secret: str, code: str
-) -> tuple[SummaryAthlete,dict[str, str]]:
+) -> tuple[SummaryAthlete, dict[str, str]]:
     """Exchange a Strava code for an access token."""
     client = Client()
     token_response = client.exchange_code_for_token(
@@ -14,13 +13,14 @@ def exchange_code_for_athlete_and_token(
         client_secret=strava_client_secret,
         code=code,
     )
-    
+
     access_token = token_response.get("access_token")
     client.access_token = access_token
 
     athlete = client.get_athlete()
-    
+
     return athlete, token_response
+
 
 def get_strava_client(
     access_token: str,

@@ -12,7 +12,11 @@ from src.data import (
 from src.gemini import generate_activity_name_with_gemini
 from pushbullet import Pushbullet
 
-from src.strava import fetch_activity_data, fetch_historic_activity_data, get_strava_client
+from src.strava import (
+    fetch_activity_data,
+    fetch_historic_activity_data,
+    get_strava_client,
+)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
