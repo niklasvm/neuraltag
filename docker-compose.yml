@@ -7,32 +7,19 @@ services:
       POSTGRES_PASSWORD: postgres
     restart: always
     ports:
-      - 5432:5432
-  pgadmin:
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: hello@world.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - 5050:80
-    depends_on:
-      - postgres
+      - 5433:5432
   strava:
-    build:
-      context: .
-      dockerfile: Dockerfile
     environment:
-      - APPLICATION_URL=http://localhost:8000
+      - APPLICATION_URL=http://localhost
       - STRAVA_CLIENT_ID=${STRAVA_CLIENT_ID}
       - STRAVA_CLIENT_SECRET=${STRAVA_CLIENT_SECRET}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - PUSHBULLET_API_KEY=${PUSHBULLET_API_KEY}
-      - DB_CONNECTION_STRING=postgresql://postgres:postgres@postgres:5432/postgres
+      - POSTGRES_CONNECTION_STRING=postgresql://postgres:postgres@postgres:5432/postgres
+      - STRAVA_VERIFY_TOKEN=${STRAVA_VERIFY_TOKEN}
     image: ghcr.io/niklasvm/strava:latest
     ports:
-      - 8000:8000
+      - 80:8000
     depends_on:
       - postgres
-    volumes:
-      - .:/app
-    command: ["fastapi", "run", "src/app.py", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["fastapi", "run", "src/app/main.py", "--host", "0.0.0.0", "--port", "8000"]

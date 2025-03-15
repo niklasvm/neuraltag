@@ -4,6 +4,11 @@ For Raspberry Pi
 * sudo apt-get install libatlas-base-dev
 * sudo apt-get install libgeos-dev
 * sudo apt-get install libpq-dev
+* sudo apt-get install libopenblas-dev
+
+numpy issues:
+pip uninstall numpy
+https://stackoverflow.com/questions/14570011/explain-why-numpy-should-not-be-imported-from-source-directory
 
 modify pyproject.toml extra index to use piwheels:
 

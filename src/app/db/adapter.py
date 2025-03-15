@@ -36,7 +36,7 @@ class Database:
             kwargs["athlete_id"] = athlete.id
 
             kwargs["uuid"] = id
-            del kwargs["id"]
+
             athlete_model = Athlete(**kwargs)
             self.session.add(athlete_model)
             self.session.commit()
