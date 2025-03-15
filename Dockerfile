@@ -6,12 +6,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     libgeos-dev \
+    libopenblas-dev \
     libatlas-base-dev \
 
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip uninstall numpy && \
-    pip install uv==0.6.3
+RUN pip install uv==0.6.3
 
 
 ENV UV_PROJECT_ENVIRONMENT="/uv_venv/"
