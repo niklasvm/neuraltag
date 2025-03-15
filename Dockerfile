@@ -2,8 +2,10 @@ FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 RUN pip install --upgrade pip
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh -s -- -b /usr/local/bin
+
 
 ENV UV_PROJECT_ENVIRONMENT="/uv_venv/"
 ENV PATH="/${UV_PROJECT_ENVIRONMENT}/bin:$PATH"
