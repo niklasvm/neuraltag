@@ -43,20 +43,20 @@ jobs:
             coverageFile: coverage.xml
             token: ${{ secrets.GITHUB_TOKEN }}
 
-  docker_build_only:
-    name: Build docker image
-    runs-on: ubuntu-latest
+  # docker_build_only:
+  #   name: Build docker image
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install uv
-      - name: Build the Docker image
-        run: |
-          uv pip compile pyproject.toml -o requirements.txt
-          docker build . -t ghcr.io/${{ github.repository }}:latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Install dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install uv
+  #     - name: Build the Docker image
+  #       run: |
+  #         uv pip compile pyproject.toml -o requirements.txt
+  #         docker build . -t ghcr.io/${{ github.repository }}:latest
 
   docker_build_armv6:
     name: Build docker image for armv6
