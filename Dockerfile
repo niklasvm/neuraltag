@@ -2,12 +2,8 @@ FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends curl
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
-
-RUN pip install --upgrade pip && \
-    pip install --upgrade uv
+RUN pip install --upgrade pip
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ENV UV_PROJECT_ENVIRONMENT="/uv_venv/"
 ENV PATH="/${UV_PROJECT_ENVIRONMENT}/bin:$PATH"
