@@ -80,4 +80,4 @@ jobs:
       - name: Build the Docker image
         run: |
           uv run python cicd/deploy/modify_pyproject_toml.py
-          docker buildx build --platform linux/arm/v6 . -t ghcr.io/${{ github.repository }}:latest
+          docker buildx build --platform linux/arm/v7 . -t ghcr.io/${{ github.repository }}:latest
