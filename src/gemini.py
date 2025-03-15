@@ -28,7 +28,7 @@ Given the following input:
 
 [PROMPT]
 Provide {number_of_options} options for a name for the input activity that is consistent with the data. The names can have one or more emojis. For each name, explain in detail why it was chosen.
-Avoid using boring names like Afternoon Run, Evening Pilates or Morning Swim. Rather be creative and use names that are fun and engaging.
+Avoid using boring names like Afternoon Run, Evening Pilates or Morning Swim witin the name. Rather be creative and use names that are fun and engaging.
 """
 
 
