@@ -1,10 +1,9 @@
-FROM python:3.11-slim-bookworm
+FROM python:3.11-bookworm
 
 WORKDIR /app
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-
-RUN pip install --upgrade pip
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir uv
 
 
 ENV UV_PROJECT_ENVIRONMENT="/uv_venv/"
