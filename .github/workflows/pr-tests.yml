@@ -58,7 +58,7 @@ jobs:
         credentials_json: ${{secrets.GCP_CREDENTIALS}}
       
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
+      uses: hashicorp/setup-terraform@v3
     
     - name: Terraform Init
       run: terraform -chdir=terraform init
