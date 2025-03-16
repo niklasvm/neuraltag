@@ -25,33 +25,57 @@ jobs:
       uses: hashicorp/setup-terraform@v2
     - name: Terraform Init
       run: terraform -chdir=terraform init
+      env:
+        GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        GCP_REGION: ${{ secrets.GCP_REGION }}
     - name: Terraform Validate
       run: terraform -chdir=terraform validate
+      env:
+        GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        GCP_REGION: ${{ secrets.GCP_REGION }}
     
     - name: Login
       run: |
         gcloud auth configure-docker ${{secrets.GCP_REGION}}-docker.pkg.dev
+      env:
+        GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        GCP_REGION: ${{ secrets.GCP_REGION }}
     
     # deploy docker image
     - name: Build and push the Docker image
       run: |
         docker build -t ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava:${{github.sha}} .
-        docker push ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava:${{github.sha}}    
+        docker push ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava:${{github.sha}}
+      env:
+        GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        GCP_REGION: ${{ secrets.GCP_REGION }}
     
     - name: Terraform Plan
       run: |
         terraform -chdir=terraform plan \
-          -var "gcp_project_id=${{secrets.GCP_PROJECT_ID}}" \
-          -var "gcp_sa_key=${{secrets.GCP_SA_KEY}}" \
-          -var "gcp_region=${{secrets.GCP_REGION}}" \
+          -var "gcp_project_id=$GCP_PROJECT_ID" \
+          -var "gcp_sa_key=$GCP_SA_KEY" \
+          -var "gcp_region=$GCP_REGION" \
           -var "image_tag=${{ github.sha }}"
+      env:
+        GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        GCP_REGION: ${{ secrets.GCP_REGION }}
     - name: Terraform Apply
       run: |
         terraform -chdir=terraform apply -auto-approve \
-          -var "gcp_project_id=${{secrets.GCP_PROJECT_ID}}" \
-          -var "gcp_sa_key=${{secrets.GCP_SA_KEY}}" \
-          -var "gcp_region=${{secrets.GCP_REGION}}" \
+          -var "gcp_project_id=$GCP_PROJECT_ID" \
+          -var "gcp_sa_key=$GCP_SA_KEY" \
+          -var "gcp_region=$GCP_REGION" \
           -var "image_tag=${{ github.sha }}"
+      env:
+        GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        GCP_REGION: ${{ secrets.GCP_REGION }}
 
     - name: Delete all docker images except latest one
       run: |
@@ -59,14 +83,21 @@ jobs:
           --filter='tags!=${{ github.sha }}' \
           --format='get(digest)' \
           | xargs -I {} gcloud container images delete ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava@{} --force-delete-tags
+      env:
+        GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        GCP_REGION: ${{ secrets.GCP_REGION }}
     - name: Delete old Google Cloud Run revisions
       run: |
-        TO_DELETE=$(gcloud run revisions list --region=${{secrets.GCP_REGION}} --service=strava \
+        TO_DELETE=$(gcloud run revisions list --region=$GCP_REGION --service=strava \
           --filter="status.conditions.type:Active AND status.conditions.status:'False'" \
           --format='value(metadata.name)')
         if [ -n "$TO_DELETE" ]; then
             for REVISION in $TO_DELETE; do
-                gcloud run revisions delete $REVISION --region=${{secrets.GCP_REGION}} --quiet
+                gcloud run revisions delete $REVISION --region=$GCP_REGION --quiet
             done
         fi
-    
+      env:
+        GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        GCP_REGION: ${{ secrets.GCP_REGION }}
