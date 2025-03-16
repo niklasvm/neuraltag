@@ -37,7 +37,7 @@ resource "google_cloud_run_v2_service" "default" {
     containers {
       command = ["fastapi", "run", "./src/app/main.py"]
       args    = ["--host", "0.0.0.0", "--port", "8080"]
-      image   = "${google_artifact_registry_repository.default.location}-docker.pkg.dev/${var.gcp_project_id}/${google_artifact_registry_repository.default.repository_id}/strava:latest"
+      image   = "${google_artifact_registry_repository.default.location}-docker.pkg.dev/${var.gcp_project_id}/${google_artifact_registry_repository.default.repository_id}/strava:${var.image_tag}"
       resources {
         cpu_idle          = true
         startup_cpu_boost = true

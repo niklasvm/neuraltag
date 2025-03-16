@@ -7,7 +7,7 @@ on:
 
 jobs:
 
-  build_and_push:
+  deploy:
 
     runs-on: ubuntu-latest
     permissions:
@@ -21,6 +21,13 @@ jobs:
         credentials_json: ${{ secrets.GCP_CREDENTIALS }}
     - name: Setup Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v1
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+    - name: Terraform Init
+      run: terraform -chdir=terraform init
+    - name: Terraform Validate
+      run: terraform -chdir=terraform validate
+    
     - name: Login
       run: |
         gcloud auth configure-docker ${{secrets.GCP_REGION}}-docker.pkg.dev
@@ -29,21 +36,20 @@ jobs:
     - name: Build and push the Docker image
       run: |
         docker build -t ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava:latest .
-        docker push ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava:latest
-
-    # terraform
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-    - name: Terraform Init
-      run: terraform -chdir=terraform init
-    - name: Terraform Validate
-      run: terraform -chdir=terraform validate
+        docker push ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava:latest    
+    
     - name: Terraform Plan
       run: |
         terraform -chdir=terraform plan \
-          -var "gcp_project_id=${{secrets.GCP_PROJECT_ID}}" -var "gcp_sa_key=${{secrets.GCP_SA_KEY}}" -var "gcp_region=${{secrets.GCP_REGION}}"
+          -var "gcp_project_id=${{secrets.GCP_PROJECT_ID}}" \
+          -var "gcp_sa_key=${{secrets.GCP_SA_KEY}}" \
+          -var "gcp_region=${{secrets.GCP_REGION}}" \
+          -var "image_tag=${{ github.sha }}"
     - name: Terraform Apply
       run: |
         terraform -chdir=terraform apply -auto-approve \
-          -var "gcp_project_id=${{secrets.GCP_PROJECT_ID}}" -var "gcp_sa_key=${{secrets.GCP_SA_KEY}}" -var "gcp_region=${{secrets.GCP_REGION}}"
+          -var "gcp_project_id=${{secrets.GCP_PROJECT_ID}}" \
+          -var "gcp_sa_key=${{secrets.GCP_SA_KEY}}" \
+          -var "gcp_region=${{secrets.GCP_REGION}}" \
+          -var "image_tag=${{ github.sha }}"
     
