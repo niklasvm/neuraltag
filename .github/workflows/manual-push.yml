@@ -21,6 +21,12 @@ jobs:
     - name: Setup Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v1
 
+    - name: Login
+      run: |
+        gcloud auth login
+        gcloud auth configure-docker ${{secrets.GCP_REGION}}-docker.pkg.dev
+    
+
     - name: Build and push the Docker image
       run: |
         docker build -t ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava:v2 .
