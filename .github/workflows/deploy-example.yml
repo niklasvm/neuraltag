@@ -1,0 +1,44 @@
+name: Deploy to GCP
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure Docker authentication
+        run: gcloud auth configure-docker ${{ google_artifact_registry_repository.docker_repo.location }}-docker.pkg.dev
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t ${{ google_artifact_registry_repository.docker_repo.location }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${google_artifact_registry_repository.docker_repo.repository_id}/strava:latest .
+          docker push ${{ google_artifact_registry_repository.docker_repo.location }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${google_artifact_registry_repository.docker_repo.repository_id}/strava:latest
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        env:
+          TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+
+
+terraform -chdir=iac/terraform plan -var "gcp_project_id=${GCP_PROJECT_ID}" -var "gcp_sa_key=${GCP_SA_KEY}"
+
