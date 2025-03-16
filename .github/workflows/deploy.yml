@@ -55,7 +55,7 @@ jobs:
 
     - name: Delete all docker images except latest one
       run: |
-        gcloud container images list-tags ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/strava/strava \
+        gcloud container images list-tags ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava \
           --filter='tags!=${{ github.sha }}' \
           --format='get(digest)' \
           | xargs -I {} gcloud container images delete ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava@{} --force-delete-tags
@@ -66,7 +66,7 @@ jobs:
           --format='value(metadata.name)')
         if [ -n "$TO_DELETE" ]; then
             for REVISION in $TO_DELETE; do
-                gcloud run revisions delete $REVISION --region=${GCP_REGION} --quiet
+                gcloud run revisions delete $REVISION --region=${{secrets.GCP_REGION}} --quiet
             done
         fi
     
