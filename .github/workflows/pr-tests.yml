@@ -35,12 +35,12 @@ jobs:
             source .venv/bin/activate
             make unit_tests
 
-      - name: Add coverage to PR
-        id: jacoco
-        uses: orgoro/coverage@v3.2
-        with:
-            coverageFile: coverage.xml
-            token: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Add coverage to PR
+      #   id: jacoco
+      #   uses: orgoro/coverage@v3.2
+      #   with:
+      #       coverageFile: coverage.xml
+      #       token: ${{ secrets.GITHUB_TOKEN }}
   
   terraform-tests:
     name: Terraform Tests
