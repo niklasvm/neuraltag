@@ -34,7 +34,7 @@ async def welcome(request: Request, uuid: str):
     db = Database(settings.postgres_connection_string)
 
     try:
-        athlete = db.get_athlete(uuid)
+        athlete = db.get_user(uuid)
         if athlete is None:
             return templates.TemplateResponse(
                 request, "error.html", {"error": "Athlete not found"}

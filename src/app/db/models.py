@@ -1,4 +1,5 @@
 from __future__ import annotations
+import datetime
 import uuid
 from sqlalchemy import (
     UUID,
@@ -6,7 +7,6 @@ from sqlalchemy import (
     Integer,
     String,
     DateTime,
-    Boolean,
     ForeignKey,
 )
 from sqlalchemy.orm import declarative_base
@@ -15,40 +15,29 @@ from sqlalchemy.orm import relationship
 Base = declarative_base()
 
 
-class Athlete(Base):
-    __tablename__ = "athletes"
+class User(Base):
+    __tablename__ = "user"
 
-    uuid = Column(UUID, primary_key=True, default=uuid.uuid4)
+    uuid = Column(UUID, primary_key=True, nullable=False, default=uuid.uuid4)
     athlete_id = Column(Integer, unique=True)
-    resource_state = Column(Integer)
-    firstname = Column(String)
-    lastname = Column(String)
-    profile_medium = Column(String)
-    profile = Column(String)
-    city = Column(String)
-    state = Column(String)
-    country = Column(String)
-    sex = Column(String)
-    premium = Column(Boolean)
-    summit = Column(Boolean)
-    created_at = Column(DateTime)
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
     updated_at = Column(DateTime)
 
-    auth = relationship("Auth", uselist=False, back_populates="athlete")
+    auth = relationship("Auth", uselist=False, back_populates="user")
 
 
 class Auth(Base):
     __tablename__ = "auth"
-    uuid = Column(UUID, primary_key=True, default=uuid.uuid4)
+    uuid = Column(UUID, primary_key=True, nullable=False, default=uuid.uuid4)
     access_token = Column(String)
     refresh_token = Column(String)
     expires_at = Column(Integer)
     scope = Column(String)
-    athlete_id = Column(Integer, ForeignKey("athletes.athlete_id"))
-    athlete = relationship(Athlete.__name__, back_populates="auth")
+    athlete_id = Column(Integer, ForeignKey("user.athlete_id"))
+    user = relationship(User.__name__, back_populates="auth")
 
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
+    updated_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
 
 class ToDictMixin:

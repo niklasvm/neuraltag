@@ -72,7 +72,7 @@ def generate_rpi_pyproject_toml(pyproject_toml: str):
 
 
 def render_welcome_page(athlete_id):
-    athlete = Database(os.environ["POSTGRES_CONNECTION_STRING"]).get_athlete(athlete_id)
+    athlete = Database(os.environ["POSTGRES_CONNECTION_STRING"]).get_user(athlete_id)
 
     template = "/Users/niklasvonmaltzahn/Documents/personal/strava/src/welcome.html.j2"
     with open(template) as f:

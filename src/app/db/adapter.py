@@ -1,12 +1,11 @@
 import datetime
 import logging
-import uuid
 from sqlalchemy import create_engine
 
 from sqlalchemy.orm import sessionmaker
 
-from src.app.db.models import Auth, Base, Athlete
-from stravalib.model import SummaryAthlete
+from src.app.db.encryption import decrypt_token, encrypt_token
+from src.app.db.models import Auth, Base, User
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,78 +15,57 @@ class Database:
     def __init__(self, connection_string: str):
         engine = create_engine(connection_string)
         Base.metadata.create_all(engine)  # create the tables.
-        Session = sessionmaker(bind=engine)
-        self.session = Session()
+        self.Session = sessionmaker(bind=engine)
 
-    def add_athlete(self, athlete: SummaryAthlete):
-        found_athlete = (
-            self.session.query(Athlete).filter(Athlete.athlete_id == athlete.id).first()
-        )
-        if not found_athlete:
-            id = str(uuid.uuid4())
-            kwargs = {
-                k: v
-                for k, v in athlete.__dict__.items()
-                if k in Athlete.__table__.columns.keys()
-            }
-
-            kwargs["created_at"] = datetime.datetime.now()
-            kwargs["updated_at"] = datetime.datetime.now()
-            kwargs["athlete_id"] = athlete.id
-
-            kwargs["uuid"] = id
-
-            athlete_model = Athlete(**kwargs)
-            self.session.add(athlete_model)
-            self.session.commit()
-            logger.info(f"Added athlete {athlete.id} to the database")
-
-            return id
-        else:
-            logger.info(f"Athlete with id {athlete.id} already exists in the database")
-            return found_athlete.uuid
-
-    def get_athlete(self, uuid: str) -> Athlete:
-        return self.session.query(Athlete).filter(Athlete.uuid == uuid).first()
-
-    def add_auth(
-        self,
-        athlete_id: int,
-        access_token: str,
-        refresh_token: str,
-        expires_at: int,
-        scope: str,
-    ):
-        if self.session.query(Auth).filter(Auth.athlete_id == athlete_id).first():
-            self.session.query(Auth).filter(Auth.athlete_id == athlete_id).update(
-                {
-                    "access_token": access_token,
-                    "refresh_token": refresh_token,
-                    "expires_at": expires_at,
-                    "scope": scope,
-                    "updated_at": datetime.datetime.now(),
-                }
+    def add_user(self, user: User):
+        with self.Session() as session:
+            existing_user = (
+                session.query(User).filter(User.athlete_id == user.athlete_id).first()
             )
-            self.session.commit()
-            logger.info(f"Updated auth for athlete {athlete_id}")
+            if not existing_user:
+                session.add(user)
+                session.commit()
+                logger.info(f"Added user {user.uuid} to the database")
 
-        else:
-            auth = Auth(
-                uuid=str(uuid.uuid4()),
-                athlete_id=athlete_id,
-                access_token=access_token,
-                refresh_token=refresh_token,
-                expires_at=expires_at,
-                scope=scope,
-                created_at=datetime.datetime.now(),
-                updated_at=datetime.datetime.now(),
+                return str(user.uuid)
+            else:
+                logger.info(f"User with id {user.uuid} already exists in the database")
+                return str(existing_user.uuid)
+
+    def get_user(self, uuid: str) -> User:
+        with self.Session() as session:
+            return session.query(User).filter(User.uuid == uuid).first()
+
+    def add_auth(self, auth: Auth, key: bytes):
+        # encrypt tokens
+        auth.access_token = encrypt_token(auth.access_token, key)
+        auth.refresh_token = encrypt_token(auth.refresh_token, key)
+
+        with self.Session() as session:
+            existing_auth = (
+                session.query(Auth).filter(Auth.athlete_id == auth.athlete_id).first()
             )
-            self.session.add(auth)
-            self.session.commit()
-            logger.info(f"Added auth for athlete {athlete_id}")
+            if existing_auth:
+                existing_auth.access_token = auth.access_token
+                existing_auth.refresh_token = auth.refresh_token
+                existing_auth.expires_at = auth.expires_at
+                existing_auth.scope = auth.scope
+                existing_auth.updated_at = datetime.datetime.now()
 
-    def get_auth(self, athlete_id: int) -> Auth:
-        return self.session.query(Auth).filter(Auth.athlete_id == athlete_id).first()
+                session.commit()
+                logger.info(f"Updated auth for athlete {auth.athlete_id}")
+
+            else:
+                session.add(auth)
+                session.commit()
+                logger.info(f"Added auth for athlete {auth.athlete_id}")
+
+    def get_auth_by_athlete_id(self, athlete_id: int, key: bytes) -> Auth:
+        with self.Session() as session:
+            auth = session.query(Auth).filter(Auth.athlete_id == athlete_id).first()
+            auth.access_token = decrypt_token(auth.access_token, key)
+            auth.refresh_token = decrypt_token(auth.refresh_token, key)
+            return auth
 
     # def add_activity(self, activity: SummaryActivity):
     #     activity_dict = activity.model_dump()
