@@ -37,7 +37,7 @@ def rename_workflow(
     days = 365
     temperature = 2
 
-    gemini_named_description = "automagically named with Gemini 🤖"
+    description_to_append = "named with AI 🤖"
 
     client = get_strava_client(
         access_token=access_token,
@@ -51,12 +51,10 @@ def rename_workflow(
         client=client,
         activity_id=activity_id,
     )
+    existing_description = activity.description
 
-    if (
-        gemini_named_description in str(activity.description)
-        and activity.name != "Rename"
-    ):
-        logger.info(f"Activity {activity_id} already named with Gemini 🤖")
+    if description_to_append in str(activity.description) and activity.name != "Rename":
+        logger.info(f"Activity {activity_id} already named")
         return
 
     before = activity.start_date_local + datetime.timedelta(days=1)
@@ -111,16 +109,19 @@ def rename_workflow(
     top_name_suggestion = name_results[0].name
     top_name_description = name_results[0].description
     logger.info(
-        f"Top name suggestion for activity {activity_id}: {top_name_suggestion}"
+        f"Top name suggestion for activity {activity_id}: {top_name_suggestion}: {top_name_description}"
     )
 
     time_end = datetime.datetime.now()
     duration_seconds = (time_end - time_start).total_seconds()
     logger.info(f"Duration: {duration_seconds} seconds")
+
+    new_description = f"{existing_description}\n\n{description_to_append}".strip()
+    logger.info(f"New description: {new_description}")
     client.update_activity(
         activity_id=activity_id,
         name=top_name_suggestion,
-        description=gemini_named_description,
+        description=new_description,
     )
 
     # notify via pushbullet
