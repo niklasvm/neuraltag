@@ -32,6 +32,7 @@ async def handle_post_event(
         settings.postgres_connection_string,
         settings.gemini_api_key,
         settings.pushbullet_api_key,
+        settings.encryption_key,
     )
 
     return JSONResponse(content={"message": "Received webhook event"}, status_code=200)

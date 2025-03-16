@@ -15,6 +15,7 @@ def process_post_event(
     postgres_connection_string: str,
     gemini_api_key: str,
     pushbullet_api_key: str,
+    encryption_key: bytes,
 ):
     """
     Processes the Strava webhook event by renaming the activity.
@@ -29,7 +30,7 @@ def process_post_event(
     ):
         activity_id = content.object_id
         athlete_id = content.owner_id
-        strava_db = Database(postgres_connection_string)
+        strava_db = Database(postgres_connection_string, encryption_key=encryption_key)
         auth = strava_db.get_auth_by_athlete_id(athlete_id=athlete_id)
         try:
             rename_workflow(

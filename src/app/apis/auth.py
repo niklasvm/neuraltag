@@ -55,6 +55,7 @@ async def login(
             client_id=settings.strava_client_id,
             client_secret=settings.strava_client_secret,
             postgres_connection_string=settings.postgres_connection_string,
+            encryption_key=settings.encryption_key,
         )
         uuid = athlete.uuid
     except Exception:

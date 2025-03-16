@@ -12,10 +12,12 @@ logger = logging.getLogger(__name__)
 
 
 class Database:
-    def __init__(self, connection_string: str):
+    def __init__(self, connection_string: str, encryption_key: bytes):
         engine = create_engine(connection_string)
         Base.metadata.create_all(engine)  # create the tables.
         self.Session = sessionmaker(bind=engine)
+
+        self.encryption_key = encryption_key
 
     def add_user(self, user: User):
         with self.Session() as session:
@@ -36,10 +38,10 @@ class Database:
         with self.Session() as session:
             return session.query(User).filter(User.uuid == uuid).first()
 
-    def add_auth(self, auth: Auth, key: bytes):
+    def add_auth(self, auth: Auth):
         # encrypt tokens
-        auth.access_token = encrypt_token(auth.access_token, key)
-        auth.refresh_token = encrypt_token(auth.refresh_token, key)
+        auth.access_token = encrypt_token(auth.access_token, self.encryption_key)
+        auth.refresh_token = encrypt_token(auth.refresh_token, self.encryption_key)
 
         with self.Session() as session:
             existing_auth = (
@@ -60,11 +62,11 @@ class Database:
                 session.commit()
                 logger.info(f"Added auth for athlete {auth.athlete_id}")
 
-    def get_auth_by_athlete_id(self, athlete_id: int, key: bytes) -> Auth:
+    def get_auth_by_athlete_id(self, athlete_id: int) -> Auth:
         with self.Session() as session:
             auth = session.query(Auth).filter(Auth.athlete_id == athlete_id).first()
-            auth.access_token = decrypt_token(auth.access_token, key)
-            auth.refresh_token = decrypt_token(auth.refresh_token, key)
+            auth.access_token = decrypt_token(auth.access_token, self.encryption_key)
+            auth.refresh_token = decrypt_token(auth.refresh_token, self.encryption_key)
             return auth
 
     # def add_activity(self, activity: SummaryActivity):
