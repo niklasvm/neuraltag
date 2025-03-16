@@ -30,6 +30,8 @@ async def handle_post_event(
         settings.strava_client_id,
         settings.strava_client_secret,
         settings.postgres_connection_string,
+        settings.gemini_api_key,
+        settings.pushbullet_api_key,
     )
 
     return JSONResponse(content={"message": "Received webhook event"}, status_code=200)

@@ -19,7 +19,7 @@ def process_login_event(
     db = Database(postgres_connection_string)
 
     # add/update athlete to database
-    athlete_uuid = db.add_athlete(athlete)
+    athlete_uuid = db.add_user(athlete)
 
     # add/update auth to database
     db.add_auth(
@@ -30,6 +30,6 @@ def process_login_event(
         scope=scope,
     )
 
-    athlete = db.get_athlete(uuid=athlete_uuid)
+    athlete = db.get_user(uuid=athlete_uuid)
 
     return athlete

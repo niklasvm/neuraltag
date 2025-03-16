@@ -1,6 +1,5 @@
 import datetime
 import logging
-import os
 
 import pandas as pd
 
@@ -30,6 +29,8 @@ def rename_workflow(
     expires_at: int,
     client_id: int,
     client_secret: str,
+    gemini_api_key: str,
+    pushbullet_api_key: str,
 ):
     time_start = datetime.datetime.now()
 
@@ -102,7 +103,7 @@ def rename_workflow(
         activity_id=activity_id,
         data=activities_df,
         number_of_options=3,
-        api_key=os.environ["GEMINI_API_KEY"],
+        api_key=gemini_api_key,
         temperature=temperature,
     )
     logger.info(f"Name suggestions: {name_results}")
@@ -123,5 +124,5 @@ def rename_workflow(
     )
 
     # notify via pushbullet
-    pb = Pushbullet(os.environ["PUSHBULLET_API_KEY"])
+    pb = Pushbullet(pushbullet_api_key)
     pb.push_note(title=top_name_suggestion, body=top_name_description)
