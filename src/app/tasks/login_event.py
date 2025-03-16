@@ -20,6 +20,9 @@ def process_login_event(
 
     db = Database(postgres_connection_string, encryption_key=encryption_key)
 
+    # add/update athlete to database
+    athlete_uuid = db.add_user(User(athlete_id=athlete.id))
+
     # add/update auth to database
     db.add_auth(
         Auth(
@@ -30,9 +33,6 @@ def process_login_event(
             athlete_id=athlete.id,
         )
     )
-
-    # add/update athlete to database
-    athlete_uuid = db.add_user(User(athlete_id=athlete.id))
 
     athlete = db.get_user(uuid=athlete_uuid)
 
