@@ -35,8 +35,8 @@ jobs:
     # deploy docker image
     - name: Build and push the Docker image
       run: |
-        docker build -t ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava:latest .
-        docker push ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava:latest    
+        docker build -t ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava:${{github.sha}} .
+        docker push ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava:${{github.sha}}    
     
     - name: Terraform Plan
       run: |
