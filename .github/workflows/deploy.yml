@@ -52,4 +52,21 @@ jobs:
           -var "gcp_sa_key=${{secrets.GCP_SA_KEY}}" \
           -var "gcp_region=${{secrets.GCP_REGION}}" \
           -var "image_tag=${{ github.sha }}"
+
+    - name: Delete all docker images except latest one
+      run: |
+        gcloud container images list-tags ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/strava/strava \
+          --filter='tags!=${{ github.sha }}' \
+          --format='get(digest)' \
+          | xargs -I {} gcloud container images delete ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava@{} --force-delete-tags
+    - name: Delete old Google Cloud Run revisions
+      run: |
+        TO_DELETE=$(gcloud run revisions list --region=${GCP_REGION} --service=strava \
+          --filter="status.conditions.type:Active AND status.conditions.status:'False'" \
+          --format='value(metadata.name)')
+        if [ -n "$TO_DELETE" ]; then
+            for REVISION in $TO_DELETE; do
+                gcloud run revisions delete $REVISION --region=${GCP_REGION} --quiet
+            done
+        fi
     
