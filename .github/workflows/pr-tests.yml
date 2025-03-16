@@ -45,16 +45,18 @@ jobs:
   terraform-tests:
     name: Terraform Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       GCP_PROJECT_ID: ${{secrets.GCP_PROJECT_ID}}
       GCP_SA_KEY: ${{secrets.GCP_SA_KEY}}
       GCP_REGION: ${{secrets.GCP_REGION}}
-      GCP_CREDENTIALS: ${{secrets.GCP_CREDENTIALS}}
     steps:
     - uses: actions/checkout@v4
     - uses: 'google-github-actions/auth@v2'
       with:
-        credentials_json: $GCP_CREDENTIALS
+        credentials_json: ${{secrets.GCP_CREDENTIALS}}
+      
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
     
