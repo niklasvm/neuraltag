@@ -1,6 +1,6 @@
 # strava
 
-Exploring the strava api from python.
+Exploring the strava api from python
 
 ## Updating activity names
 
