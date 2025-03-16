@@ -116,7 +116,10 @@ def rename_workflow(
     duration_seconds = (time_end - time_start).total_seconds()
     logger.info(f"Duration: {duration_seconds} seconds")
 
-    new_description = f"{existing_description}\n\n{description_to_append}".strip()
+    if description_to_append not in str(existing_description):
+        new_description = f"{existing_description}\n\n{description_to_append}".strip()
+    else:
+        new_description = existing_description
     logger.info(f"New description: {new_description}")
     client.update_activity(
         activity_id=activity_id,
