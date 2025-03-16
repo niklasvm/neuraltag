@@ -3,12 +3,28 @@ import logging
 from sqlalchemy import create_engine
 
 from sqlalchemy.orm import sessionmaker
+from cryptography.fernet import Fernet
+import base64
 
-from src.app.db.encryption import decrypt_token, encrypt_token
 from src.app.db.models import Auth, Base, User
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def encrypt_token(token: str, key: bytes) -> str:
+    """Encrypts an access token."""
+    f = Fernet(key)
+    encrypted_token = f.encrypt(token.encode())
+    return base64.urlsafe_b64encode(encrypted_token).decode()
+
+
+def decrypt_token(encrypted_token: str, key: bytes) -> str:
+    """Decrypts an access token."""
+    f = Fernet(key)
+    encrypted_token_bytes = base64.urlsafe_b64decode(encrypted_token)
+    decrypted_token = f.decrypt(encrypted_token_bytes).decode()
+    return decrypted_token
 
 
 class Database:
