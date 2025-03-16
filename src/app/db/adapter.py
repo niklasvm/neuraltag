@@ -46,9 +46,11 @@ class Database:
                 logger.info(f"Added user {user.uuid} to the database")
 
                 return str(user.uuid)
-            else:
-                logger.info(f"User with id {user.uuid} already exists in the database")
-                return str(existing_user.uuid)
+
+            logger.info(
+                f"User with id {existing_user.uuid} already exists in the database"
+            )
+            return str(existing_user.uuid)
 
     def get_user(self, uuid: str) -> User:
         with self.Session() as session:
