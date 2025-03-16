@@ -5,7 +5,7 @@ on:
     branches: [ master ]
 
 jobs:
-  tests:
+  application-tests:
     name: PR Tests
     runs-on: ubuntu-latest
     permissions:
@@ -17,7 +17,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       
       - name: Install dependencies
         run: |
@@ -36,12 +35,32 @@ jobs:
             source .venv/bin/activate
             make unit_tests
 
-      - name: Add coverage to PR
-        id: jacoco
-        uses: orgoro/coverage@v3.2
-        with:
-            coverageFile: coverage.xml
-            token: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Add coverage to PR
+      #   id: jacoco
+      #   uses: orgoro/coverage@v3.2
+      #   with:
+      #       coverageFile: coverage.xml
+      #       token: ${{ secrets.GITHUB_TOKEN }}
+  
+  terraform-tests:
+    name: Terraform Tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+    
+    - name: Terraform Init
+      run: terraform -chdir=terraform init
+    - name: Terraform Validate
+      run: terraform -chdir=terraform validate
+    - name: Terraform Plan
+      run: |
+        terraform -chdir=terraform plan \
+          -var "gcp_project_id=${{secrets.GCP_PROJECT_ID}}" -var "gcp_sa_key=${{secrets.GCP_SA_KEY}}" -var "gcp_region=${{secrets.GCP_REGION}}"
 
   docker_build_only:
     name: Build docker image

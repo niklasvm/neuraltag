@@ -1,0 +1,49 @@
+name: Deploy application to Google Cloud Platform
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch: {}
+
+jobs:
+
+  build_and_push:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+    - name: Setup Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+    - name: Login
+      run: |
+        gcloud auth configure-docker ${{secrets.GCP_REGION}}-docker.pkg.dev
+    
+    # deploy docker image
+    - name: Build and push the Docker image
+      run: |
+        docker build -t ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava:latest .
+        docker push ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava:latest
+
+    # terraform
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+    - name: Terraform Init
+      run: terraform -chdir=terraform init
+    - name: Terraform Validate
+      run: terraform -chdir=terraform validate
+    - name: Terraform Plan
+      run: |
+        terraform -chdir=terraform plan \
+          -var "gcp_project_id=${{secrets.GCP_PROJECT_ID}}" -var "gcp_sa_key=${{secrets.GCP_SA_KEY}}" -var "gcp_region=${{secrets.GCP_REGION}}"
+    - name: Terraform Apply
+      run: |
+        terraform -chdir=terraform apply -auto-approve \
+          -var "gcp_project_id=${{secrets.GCP_PROJECT_ID}}" -var "gcp_sa_key=${{secrets.GCP_SA_KEY}}" -var "gcp_region=${{secrets.GCP_REGION}}"
+    
