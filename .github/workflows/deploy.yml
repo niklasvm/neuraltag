@@ -61,7 +61,7 @@ jobs:
           | xargs -I {} gcloud container images delete ${{secrets.GCP_REGION}}-docker.pkg.dev/${{secrets.GCP_PROJECT_ID}}/strava/strava@{} --force-delete-tags
     - name: Delete old Google Cloud Run revisions
       run: |
-        TO_DELETE=$(gcloud run revisions list --region=${GCP_REGION} --service=strava \
+        TO_DELETE=$(gcloud run revisions list --region=${{secrets.GCP_REGION}} --service=strava \
           --filter="status.conditions.type:Active AND status.conditions.status:'False'" \
           --format='value(metadata.name)')
         if [ -n "$TO_DELETE" ]; then
