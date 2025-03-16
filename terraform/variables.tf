@@ -9,3 +9,7 @@ variable "gcp_sa_key" {
 variable "gcp_region" {
   type = string
 }
+
+variable "image_tag" {
+  type = string
+}
