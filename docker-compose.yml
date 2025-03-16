@@ -17,7 +17,10 @@ services:
       - PUSHBULLET_API_KEY=${PUSHBULLET_API_KEY}
       - POSTGRES_CONNECTION_STRING=postgresql://postgres:postgres@postgres:5432/postgres
       - STRAVA_VERIFY_TOKEN=${STRAVA_VERIFY_TOKEN}
-    image: ghcr.io/niklasvm/strava:latest
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - 80:8000
     depends_on:

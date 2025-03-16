@@ -1,6 +1,6 @@
 import logging
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -31,17 +31,19 @@ app.mount("/static", StaticFiles(directory="src/app/static"), name="static")
 
 @app.get("/welcome", response_class=HTMLResponse)
 async def welcome(request: Request, uuid: str):
-    db = Database(settings.postgres_connection_string)
+    db = Database(
+        settings.postgres_connection_string, encryption_key=settings.encryption_key
+    )
 
     try:
-        athlete = db.get_athlete(uuid)
-        if athlete is None:
+        user = db.get_user(uuid)
+        if user is None:
             return templates.TemplateResponse(
-                request, "error.html", {"error": "Athlete not found"}
+                request, "error.html", {"error": "User not found"}
             )  # Provide error message
-        return templates.TemplateResponse(request, "welcome.html", {"athlete": athlete})
+        return templates.TemplateResponse(request, "welcome.html")
     except Exception:
-        logger.exception(f"Error fetching athlete with UUID {uuid}:")
-        raise HTTPException(
-            status_code=500, detail="Failed to retrieve athlete data"
-        )  # Use HTTPException
+        logger.exception(f"Error fetching User with UUID {uuid}:")
+        return templates.TemplateResponse(
+            request, "error.html", {"error": "User not found"}
+        )  # Provide error message

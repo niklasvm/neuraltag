@@ -1,6 +1,5 @@
 import datetime
 import logging
-import os
 
 import pandas as pd
 
@@ -30,13 +29,15 @@ def rename_workflow(
     expires_at: int,
     client_id: int,
     client_secret: str,
+    gemini_api_key: str,
+    pushbullet_api_key: str,
 ):
     time_start = datetime.datetime.now()
 
     days = 365
     temperature = 2
 
-    gemini_named_description = "automagically named with Gemini 🤖"
+    description_to_append = "named with AI 🤖"
 
     client = get_strava_client(
         access_token=access_token,
@@ -50,12 +51,10 @@ def rename_workflow(
         client=client,
         activity_id=activity_id,
     )
+    existing_description = activity.description
 
-    if (
-        gemini_named_description in str(activity.description)
-        and activity.name != "Rename"
-    ):
-        logger.info(f"Activity {activity_id} already named with Gemini 🤖")
+    if description_to_append in str(activity.description) and activity.name != "Rename":
+        logger.info(f"Activity {activity_id} already named")
         return
 
     before = activity.start_date_local + datetime.timedelta(days=1)
@@ -102,7 +101,7 @@ def rename_workflow(
         activity_id=activity_id,
         data=activities_df,
         number_of_options=3,
-        api_key=os.environ["GEMINI_API_KEY"],
+        api_key=gemini_api_key,
         temperature=temperature,
     )
     logger.info(f"Name suggestions: {name_results}")
@@ -110,18 +109,24 @@ def rename_workflow(
     top_name_suggestion = name_results[0].name
     top_name_description = name_results[0].description
     logger.info(
-        f"Top name suggestion for activity {activity_id}: {top_name_suggestion}"
+        f"Top name suggestion for activity {activity_id}: {top_name_suggestion}: {top_name_description}"
     )
 
     time_end = datetime.datetime.now()
     duration_seconds = (time_end - time_start).total_seconds()
     logger.info(f"Duration: {duration_seconds} seconds")
+
+    if description_to_append not in str(existing_description):
+        new_description = f"{existing_description}\n\n{description_to_append}".strip()
+    else:
+        new_description = existing_description
+    logger.info(f"New description: {new_description}")
     client.update_activity(
         activity_id=activity_id,
         name=top_name_suggestion,
-        description=gemini_named_description,
+        description=new_description,
     )
 
     # notify via pushbullet
-    pb = Pushbullet(os.environ["PUSHBULLET_API_KEY"])
+    pb = Pushbullet(pushbullet_api_key)
     pb.push_note(title=top_name_suggestion, body=top_name_description)
