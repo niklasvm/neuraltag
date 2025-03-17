@@ -37,7 +37,7 @@ def rename_workflow(
     days = 365
     temperature = 2
 
-    description_to_append = "named with AI 🤖"
+    description_to_append = "named with NeuralTag 🤖"
 
     client = get_strava_client(
         access_token=access_token,
@@ -115,6 +115,9 @@ def rename_workflow(
     time_end = datetime.datetime.now()
     duration_seconds = (time_end - time_start).total_seconds()
     logger.info(f"Duration: {duration_seconds} seconds")
+
+    if existing_description is None:
+        existing_description = ""
 
     if description_to_append not in str(existing_description):
         new_description = f"{existing_description}\n\n{description_to_append}".strip()
