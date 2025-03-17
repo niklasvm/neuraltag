@@ -1,4 +1,5 @@
 import logging
+import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Query, Request, HTTPException
@@ -7,7 +8,10 @@ from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 
 from src.app.schemas.login_request import LoginRequest
-from src.app.tasks.login_event import login_new_user, onboard_new_user
+from src.app.tasks.login_event import (
+    strava_authenticate_and_load_user_and_auth,
+    strava_fetch_and_load_historic_activities,
+)
 from src.app.core.config import settings
 
 load_dotenv(override=True)
@@ -52,8 +56,9 @@ async def login(
         )
 
     try:
-        athlete = login_new_user(
-            login_request=login_request,
+        athlete = strava_authenticate_and_load_user_and_auth(
+            code=login_request.code,
+            scope=login_request.scope,
             client_id=settings.strava_client_id,
             client_secret=settings.strava_client_secret,
             postgres_connection_string=settings.postgres_connection_string,
@@ -64,13 +69,19 @@ async def login(
         logger.exception("Error during login:")
         raise HTTPException(status_code=500, detail="Failed to log in user")
 
+    # fetch and load historic activities
+    days = 365
+    before: datetime.datetime = datetime.datetime.now()
+    after: datetime.datetime = before - datetime.timedelta(days=days)
     background_tasks.add_task(
-        onboard_new_user,
+        strava_fetch_and_load_historic_activities,
         athlete_id=athlete.athlete_id,
         client_id=settings.strava_client_id,
         client_secret=settings.strava_client_secret,
         postgres_connection_string=settings.postgres_connection_string,
         encryption_key=settings.encryption_key,
+        before=before,
+        after=after,
     )
 
     return RedirectResponse(url=f"/welcome?uuid={uuid}")
