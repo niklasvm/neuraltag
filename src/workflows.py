@@ -37,7 +37,7 @@ def rename_workflow(
     days = 365
     temperature = 2
 
-    description_to_append = "named with AI 🤖"
+    description_to_append = "named with NeuralTag 🤖"
 
     client = get_strava_client(
         access_token=access_token,
