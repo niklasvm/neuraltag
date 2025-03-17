@@ -1,13 +1,13 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Query, Request, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Query, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 
 from src.app.schemas.login_request import LoginRequest
-from src.app.tasks.login_event import process_login_event
+from src.app.tasks.login_event import login_new_user, onboard_new_user
 from src.app.core.config import settings
 
 load_dotenv(override=True)
@@ -40,7 +40,9 @@ async def authorization() -> RedirectResponse:
 
 @router.get(AUTHORIZATION_CALLBACK)
 async def login(
-    request: Request, login_request: Annotated[LoginRequest, Query()]
+    request: Request,
+    login_request: Annotated[LoginRequest, Query()],
+    background_tasks: BackgroundTasks,
 ) -> RedirectResponse:
     if login_request.error is not None:
         return templates.TemplateResponse(
@@ -50,7 +52,7 @@ async def login(
         )
 
     try:
-        athlete = process_login_event(
+        athlete = login_new_user(
             login_request=login_request,
             client_id=settings.strava_client_id,
             client_secret=settings.strava_client_secret,
@@ -61,5 +63,14 @@ async def login(
     except Exception:
         logger.exception("Error during login:")
         raise HTTPException(status_code=500, detail="Failed to log in user")
+
+    background_tasks.add_task(
+        onboard_new_user,
+        athlete_id=athlete.athlete_id,
+        client_id=settings.strava_client_id,
+        client_secret=settings.strava_client_secret,
+        postgres_connection_string=settings.postgres_connection_string,
+        encryption_key=settings.encryption_key,
+    )
 
     return RedirectResponse(url=f"/welcome?uuid={uuid}")
