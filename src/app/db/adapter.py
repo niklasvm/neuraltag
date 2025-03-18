@@ -1,5 +1,6 @@
 import datetime
 import logging
+import uuid
 from sqlalchemy import create_engine
 
 from sqlalchemy.orm import sessionmaker
@@ -7,6 +8,7 @@ from cryptography.fernet import Fernet
 import base64
 
 from src.app.db.models import Activity, Auth, Base, User
+from sqlalchemy import insert
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -76,9 +78,7 @@ class Database:
         auth.refresh_token = encrypt_token(auth.refresh_token, self.encryption_key)
 
         with self.Session() as session:
-            existing_auth = (
-                session.query(Auth).filter(Auth.athlete_id == auth.athlete_id).first()
-            )
+            existing_auth = session.query(Auth).filter(Auth.uuid == auth.uuid).first()
             if existing_auth:
                 existing_auth.access_token = auth.access_token
                 existing_auth.refresh_token = auth.refresh_token
@@ -87,16 +87,16 @@ class Database:
                 existing_auth.updated_at = datetime.datetime.now()
 
                 session.commit()
-                logger.info(f"Updated auth for athlete {auth.athlete_id}")
+                logger.info(f"Updated auth {auth.uuid}")
 
             else:
                 session.add(auth)
                 session.commit()
-                logger.info(f"Added auth for athlete {auth.athlete_id}")
+                logger.info(f"Added auth for {auth.uuid} to the database")
 
-    def get_auth_by_athlete_id(self, athlete_id: int) -> Auth:
+    def get_auth(self, uuid: int) -> Auth:
         with self.Session() as session:
-            auth = session.query(Auth).filter(Auth.athlete_id == athlete_id).first()
+            auth = session.query(Auth).filter(Auth.uuid == uuid).first()
             auth.access_token = decrypt_token(auth.access_token, self.encryption_key)
             auth.refresh_token = decrypt_token(auth.refresh_token, self.encryption_key)
             return auth
@@ -119,3 +119,46 @@ class Database:
                     setattr(existing_activity, k, v)
                 session.commit()
                 logger.info(f"Updated activity {activity.activity_id}")
+
+    def add_activities_bulk(self, activities: list[Activity]):
+        with self.Session() as session:
+            existing_activity_ids = session.query(Activity.activity_id).all()
+            existing_activity_ids = [x[0] for x in existing_activity_ids]
+
+            activities = [
+                activity
+                for activity in activities
+                if activity.activity_id not in existing_activity_ids
+            ]
+            for activity in activities:
+                activity.uuid = str(uuid.uuid4())
+                activity.created_at = datetime.datetime.now()
+                activity.updated_at = datetime.datetime.now()
+
+            session.execute(
+                insert(Activity).values([activity.dict() for activity in activities])
+            )
+            session.commit()
+            logger.info(f"Added {len(activities)} activities to the database")
+
+    def get_activities_by_date_range(
+        self, athlete_id: int, before: datetime.datetime, after: datetime.datetime
+    ) -> list[Activity]:
+        with self.Session() as session:
+            return (
+                session.query(Activity)
+                .filter(
+                    Activity.athlete_id == athlete_id,
+                    Activity.start_date_local <= before,
+                    Activity.start_date_local >= after,
+                )
+                .all()
+            )
+
+    def delete_user(self, athlete_id: int):
+        with self.Session() as session:
+            user = session.query(User).filter(User.athlete_id == athlete_id).first()
+            if user:
+                session.delete(user)
+                session.commit()
+                logger.info(f"Deleted user {athlete_id}")

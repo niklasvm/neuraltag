@@ -20,18 +20,6 @@ from sqlalchemy.orm import relationship
 Base = declarative_base()
 
 
-class User(Base):
-    __tablename__ = "user"
-
-    uuid = Column(UUID, primary_key=True, nullable=False, default=uuid.uuid4)
-    athlete_id = Column(Integer, unique=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
-    updated_at = Column(DateTime)
-
-    auth = relationship("Auth", uselist=False, back_populates="user")
-    activity = relationship("Activity", back_populates="user")
-
-
 class Auth(Base):
     __tablename__ = "auth"
     uuid = Column(UUID, primary_key=True, nullable=False, default=uuid.uuid4)
@@ -39,11 +27,24 @@ class Auth(Base):
     refresh_token = Column(String)
     expires_at = Column(Integer)
     scope = Column(String)
-    athlete_id = Column(Integer, ForeignKey("user.athlete_id"))
-    user = relationship(User.__name__, back_populates="auth")
+    user = relationship("User", back_populates="auth")
 
     created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
     updated_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
+
+
+class User(Base):
+    __tablename__ = "user"
+
+    uuid = Column(UUID, primary_key=True, nullable=False, default=uuid.uuid4)
+    athlete_id = Column(Integer, unique=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
+    updated_at = Column(DateTime)
+    auth_uuid = Column(UUID, ForeignKey("auth.uuid"))
+    auth = relationship("Auth", back_populates="user")
+    activity = relationship(
+        "Activity", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Activity(Base):
@@ -119,3 +120,9 @@ class Activity(Base):
 
     created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
     updated_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
+
+    def dict(self):
+        d = {}
+        for column in self.__table__.columns:
+            d[column.name] = getattr(self, column.name)
+        return d

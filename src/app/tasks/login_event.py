@@ -1,43 +1,39 @@
 import datetime
+import uuid
 from stravalib import Client
 from src.app.db.adapter import Database
 from src.app.db.models import Activity, Auth, User
 from src.data import summary_activity_to_activity_model
-from src.strava import exchange_code_for_athlete_and_token
+from src.strava import exchange_code_for_token
 
 
-def strava_authenticate_and_load_user_and_auth(
+def strava_authenticate_and_store(
     code: str,
     scope: str,
     client_id: int,
     client_secret: str,
     postgres_connection_string: str,
     encryption_key: bytes,
-) -> User:
-    user, token_response = exchange_code_for_athlete_and_token(
+) -> Auth:
+    token_response = exchange_code_for_token(
         strava_client_id=client_id, strava_client_secret=client_secret, code=code
     )
     db = Database(postgres_connection_string, encryption_key=encryption_key)
 
-    db.add_auth(
-        Auth(
-            access_token=token_response["access_token"],
-            refresh_token=token_response["refresh_token"],
-            expires_at=token_response["expires_at"],
-            scope=scope,
-            athlete_id=user.id,
-        )
+    auth = Auth(
+        uuid=uuid.uuid4(),
+        access_token=token_response["access_token"],
+        refresh_token=token_response["refresh_token"],
+        expires_at=token_response["expires_at"],
+        scope=scope,
     )
+    db.add_auth(auth)
 
-    # add/update athlete to database
-    user_uuid = db.add_user(User(athlete_id=user.id))
-
-    user = db.get_user(uuid=user_uuid)
-    return user
+    return auth.uuid
 
 
 def strava_fetch_and_load_historic_activities(
-    athlete_id: int,
+    auth_uuid: int,
     client_id: int,
     client_secret: str,
     postgres_connection_string: str,
@@ -46,7 +42,7 @@ def strava_fetch_and_load_historic_activities(
     after: datetime.datetime,
 ) -> list[Activity]:
     db = Database(postgres_connection_string, encryption_key=encryption_key)
-    auth = db.get_auth_by_athlete_id(athlete_id)
+    auth = db.get_auth(auth_uuid)
 
     client: Client = Client(
         access_token=auth.access_token,
@@ -58,22 +54,32 @@ def strava_fetch_and_load_historic_activities(
         client_secret=client_secret,
         refresh_token=auth.refresh_token,
     )
+
+    # load athlete
+    athlete = client.get_athlete()
+    db.add_user(User(athlete_id=athlete.id))
+
     summary_activities = client.get_activities(after=after, before=before)
     summary_activities = [x for x in summary_activities]
 
-    activities:list[Activity] = []
+    activities: list[Activity] = []
     for summary_activity in summary_activities:
         activity = summary_activity_to_activity_model(summary_activity)
-        db.add_activity(activity)
         activities.append(activity)
+
+    db.add_activities_bulk(activities)
 
     return activities
 
-def strava_fetch_and_load_activity(activity_id:int, athlete_id, client_id: int,
+
+def strava_fetch_and_load_activity(
+    activity_id: int,
+    athlete_id,
+    client_id: int,
     client_secret: str,
     postgres_connection_string: str,
-    encryption_key: bytes):
-
+    encryption_key: bytes,
+):
     db = Database(postgres_connection_string, encryption_key=encryption_key)
     auth = db.get_auth_by_athlete_id(athlete_id)
 
@@ -91,4 +97,3 @@ def strava_fetch_and_load_activity(activity_id:int, athlete_id, client_id: int,
     activity = summary_activity_to_activity_model(activity)
     db.add_activity(activity)
     return activity
-
