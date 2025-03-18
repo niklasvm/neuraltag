@@ -54,6 +54,7 @@ class Activity(Base):
     user = relationship(User.__name__, back_populates="activity")
 
     activity_id = Column(BigInteger, unique=True)
+    description = Column(String, nullable=True)
     achievement_count = Column(Integer)
     athlete_count = Column(Integer)
     average_speed = Column(Float)

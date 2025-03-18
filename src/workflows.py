@@ -1,18 +1,15 @@
 import datetime
 import logging
+from pprint import pp
 
 import pandas as pd
 
 
 from src.app.db.adapter import Database
 
-from src.data import summary_activity_to_activity_model
+from src.app.tasks.login_event import strava_fetch_and_load_activity
 from src.gemini import generate_activity_name_with_gemini
 
-from src.strava import (
-    fetch_activity_data,
-    get_strava_client,
-)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -21,9 +18,7 @@ logger = logging.getLogger(__name__)
 
 def rename_workflow(
     activity_id: int,
-    access_token: str,
-    refresh_token: str,
-    expires_at: int,
+    athlete_id: int,
     client_id: int,
     client_secret: str,
     gemini_api_key: str,
@@ -38,21 +33,16 @@ def rename_workflow(
 
     description_to_append = "named with NeuralTag 🤖"
 
-    client = get_strava_client(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        expires_at=expires_at,
-        strava_client_id=client_id,
-        strava_client_secret=client_secret,
-    )
-
-    activity = fetch_activity_data(
-        client=client,
+    activity = strava_fetch_and_load_activity(
         activity_id=activity_id,
+        athlete_id=athlete_id,
+        client_id=client_id,
+        client_secret=client_secret,
+        encryption_key=encryption_key,
+        postgres_connection_string=postgres_connection_string,
     )
 
     existing_description = activity.description
-    activity = summary_activity_to_activity_model(activity)
 
     if description_to_append in str(existing_description) and activity.name != "Rename":
         logger.info(f"Activity {activity_id} already named")
@@ -111,6 +101,7 @@ def rename_workflow(
         temperature=temperature,
     )
     logger.info(f"Name suggestions: {name_results}")
+    pp(name_results)
 
     top_name_suggestion = name_results[0].name
     top_name_description = name_results[0].description

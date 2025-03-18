@@ -125,12 +125,12 @@ class Database:
                 session.commit()
                 logger.info(f"Added activity {activity.activity_id} to the database")
             else:
-                for k, v in activity.__dict__.items():
-                    if k == "uuid":
-                        continue
-                    setattr(existing_activity, k, v)
+                # update all fields with a loop
+                for key, value in activity.dict().items():
+                    if key not in ["uuid", "activity_id", "created_at", "updated_at"]:
+                        setattr(existing_activity, key, value)
+                existing_activity.updated_at = datetime.datetime.now()
                 session.commit()
-                logger.info(f"Updated activity {activity.activity_id}")
 
     def add_activities_bulk(self, activities: list[Activity]):
         with self.Session() as session:
