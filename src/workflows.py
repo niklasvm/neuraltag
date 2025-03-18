@@ -6,6 +6,7 @@ import pandas as pd
 
 from src.app.db.adapter import Database
 
+from src.data import summary_activity_to_activity_model
 from src.gemini import generate_activity_name_with_gemini
 
 from src.strava import (
@@ -49,9 +50,11 @@ def rename_workflow(
         client=client,
         activity_id=activity_id,
     )
-    existing_description = activity.description
 
-    if description_to_append in str(activity.description) and activity.name != "Rename":
+    existing_description = activity.description
+    activity = summary_activity_to_activity_model(activity)
+
+    if description_to_append in str(existing_description) and activity.name != "Rename":
         logger.info(f"Activity {activity_id} already named")
         return
 
@@ -63,8 +66,10 @@ def rename_workflow(
     before = activity.start_date_local + datetime.timedelta(days=1)
     after = before - datetime.timedelta(days=days)
     activities = db.get_activities_by_date_range(
-        athlete_id=activity.athlete.id, before=before, after=after
+        athlete_id=activity.athlete_id, before=before, after=after
     )
+
+    activities = [activity] + activities
 
     activities_df = pd.DataFrame([activity.dict() for activity in activities])
 
@@ -91,9 +96,7 @@ def rename_workflow(
         "map_area",
     ]
 
-    activities_df = activities_df[
-        activities_df["sport_type"] == activity.sport_type.root
-    ]
+    activities_df = activities_df[activities_df["sport_type"] == activity.sport_type]
 
     activities_df = activities_df[columns]
     activities_df = activities_df.dropna(axis=1, how="all")

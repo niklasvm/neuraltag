@@ -95,6 +95,10 @@ def summary_activity_to_activity_model(summary_activity: SummaryActivity) -> Act
     del activity_dict["athlete"]
     del activity_dict["map"]
 
+    activity_dict = {
+        k: v for k, v in activity_dict.items() if k in Activity.__table__.columns.keys()
+    }
+
     activity = Activity(**activity_dict)
 
     return activity
