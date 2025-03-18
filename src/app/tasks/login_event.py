@@ -57,7 +57,7 @@ def strava_fetch_and_load_historic_activities(
 
     # load athlete
     athlete = client.get_athlete()
-    db.add_user(User(athlete_id=athlete.id))
+    db.add_user(User(athlete_id=athlete.id, auth_uuid=auth_uuid))
 
     summary_activities = client.get_activities(after=after, before=before)
     summary_activities = [x for x in summary_activities]

@@ -4,16 +4,12 @@ import logging
 import pandas as pd
 
 
-from src.data import (
-    process_activity,
-)
+from src.app.db.adapter import Database
 
 from src.gemini import generate_activity_name_with_gemini
-from pushbullet import Pushbullet
 
 from src.strava import (
     fetch_activity_data,
-    fetch_historic_activity_data,
     get_strava_client,
 )
 
@@ -31,6 +27,8 @@ def rename_workflow(
     client_secret: str,
     gemini_api_key: str,
     pushbullet_api_key: str,
+    postgres_connection_string: str,
+    encryption_key: bytes,
 ):
     time_start = datetime.datetime.now()
 
@@ -57,21 +55,21 @@ def rename_workflow(
         logger.info(f"Activity {activity_id} already named")
         return
 
-    before = activity.start_date_local + datetime.timedelta(days=1)
-    after = before - datetime.timedelta(days=days)
-    activities = fetch_historic_activity_data(
-        client=client,
-        after=after,
-        before=before,
+    db = Database(
+        connection_string=postgres_connection_string,
+        encryption_key=encryption_key,
     )
 
-    activity = process_activity(activity)
-    activities = [process_activity(x) for x in activities]
+    before = activity.start_date_local + datetime.timedelta(days=1)
+    after = before - datetime.timedelta(days=days)
+    activities = db.get_activities_by_date_range(
+        athlete_id=activity.athlete.id, before=before, after=after
+    )
 
-    activities_df = pd.DataFrame(activities)
+    activities_df = pd.DataFrame([activity.dict() for activity in activities])
 
     columns = [
-        "id",
+        "activity_id",
         "date",
         "time",
         "day_of_week",
@@ -93,9 +91,14 @@ def rename_workflow(
         "map_area",
     ]
 
-    activities_df = activities_df[activities_df["sport_type"] == activity["sport_type"]]
+    activities_df = activities_df[
+        activities_df["sport_type"] == activity.sport_type.root
+    ]
+
     activities_df = activities_df[columns]
     activities_df = activities_df.dropna(axis=1, how="all")
+
+    activities_df = activities_df.rename({"activity_id": "id"}, axis=1)
 
     name_results = generate_activity_name_with_gemini(
         activity_id=activity_id,
@@ -124,12 +127,13 @@ def rename_workflow(
     else:
         new_description = existing_description
     logger.info(f"New description: {new_description}")
-    client.update_activity(
-        activity_id=activity_id,
-        name=top_name_suggestion,
-        description=new_description,
-    )
 
-    # notify via pushbullet
-    pb = Pushbullet(pushbullet_api_key)
-    pb.push_note(title=top_name_suggestion, body=top_name_description)
+    # client.update_activity(
+    #     activity_id=activity_id,
+    #     name=top_name_suggestion,
+    #     description=new_description,
+    # )
+
+    # # notify via pushbullet
+    # pb = Pushbullet(pushbullet_api_key)
+    # pb.push_note(title=top_name_suggestion, body=top_name_description)

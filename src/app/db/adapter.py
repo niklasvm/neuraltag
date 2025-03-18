@@ -101,6 +101,18 @@ class Database:
             auth.refresh_token = decrypt_token(auth.refresh_token, self.encryption_key)
             return auth
 
+    def get_auth_by_athlete_id(self, athlete_id: int) -> Auth:
+        with self.Session() as session:
+            auth = (
+                session.query(Auth)
+                .join(User)
+                .filter(User.athlete_id == athlete_id)
+                .first()
+            )
+            auth.access_token = decrypt_token(auth.access_token, self.encryption_key)
+            auth.refresh_token = decrypt_token(auth.refresh_token, self.encryption_key)
+            return auth
+
     def add_activity(self, activity: Activity):
         with self.Session() as session:
             existing_activity = (

@@ -31,7 +31,7 @@ def process_post_event(
         activity_id = content.object_id
         athlete_id = content.owner_id
         strava_db = Database(postgres_connection_string, encryption_key=encryption_key)
-        auth = strava_db.get_auth_by_athlete_id(athlete_id=athlete_id)
+        auth = strava_db.get_auth_by_athlete_id(athlete_id)
         try:
             rename_workflow(
                 activity_id=activity_id,
@@ -42,6 +42,8 @@ def process_post_event(
                 client_secret=client_secret,
                 gemini_api_key=gemini_api_key,
                 pushbullet_api_key=pushbullet_api_key,
+                postgres_connection_string=postgres_connection_string,
+                encryption_key=encryption_key,
             )
         except Exception:
             logger.exception(
