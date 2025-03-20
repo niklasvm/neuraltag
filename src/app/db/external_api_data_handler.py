@@ -18,6 +18,7 @@ from src.strava import exchange_code_for_token
 
 logger = logging.getLogger(__name__)
 
+
 class ExternalAPIDataHandler:
     def __init__(self, auth_uuid: int, settings: Settings):
         self.auth_uuid = auth_uuid
@@ -88,13 +89,12 @@ class ExternalAPIDataHandler:
         athlete = self.client.get_athlete()
         self.db.add_user(User(athlete_id=athlete.id, auth_uuid=self.auth_uuid))
 
-
         summary_activities = self.client.get_activities(after=after, before=before)
         summary_activities = [x for x in summary_activities]
         logger.info(f"Fetched {len(summary_activities)} activities")
 
         activities: list[Activity] = []
-        
+
         logger.info("Processing activities...")
         for summary_activity in summary_activities:
             activity = summary_activity_to_activity_model(summary_activity)
