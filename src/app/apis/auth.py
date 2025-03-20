@@ -8,9 +8,8 @@ from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 
 from src.app.schemas.login_request import LoginRequest
-from src.app.tasks.login_event import (
-    strava_authenticate_and_store,
-    strava_fetch_and_load_historic_activities,
+from src.app.db.external_api_data_handler import (
+    ExternalAPIDataHandler,
 )
 from src.app.core.config import settings
 
@@ -56,7 +55,7 @@ async def login(
         )
 
     try:
-        auth_uuid = strava_authenticate_and_store(
+        strava_db_operations = ExternalAPIDataHandler.authenticate_and_store(
             code=login_request.code,
             scope=login_request.scope,
             client_id=settings.strava_client_id,
@@ -64,6 +63,7 @@ async def login(
             postgres_connection_string=settings.postgres_connection_string,
             encryption_key=settings.encryption_key,
         )
+        auth_uuid = strava_db_operations.auth_uuid
     except Exception:
         logger.exception("Error during login:")
         raise HTTPException(status_code=500, detail="Failed to log in user")
@@ -73,12 +73,7 @@ async def login(
     before: datetime.datetime = datetime.datetime.now()
     after: datetime.datetime = before - datetime.timedelta(days=days)
     background_tasks.add_task(
-        strava_fetch_and_load_historic_activities,
-        auth_uuid=auth_uuid,
-        client_id=settings.strava_client_id,
-        client_secret=settings.strava_client_secret,
-        postgres_connection_string=settings.postgres_connection_string,
-        encryption_key=settings.encryption_key,
+        strava_db_operations.fetch_and_load_historic_activities,
         before=before,
         after=after,
     )

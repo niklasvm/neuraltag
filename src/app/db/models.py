@@ -52,6 +52,7 @@ class Activity(Base):
     uuid = Column(UUID, primary_key=True, nullable=False, default=uuid.uuid4)
     athlete_id = Column(Integer, ForeignKey("user.athlete_id"))
     user = relationship(User.__name__, back_populates="activity")
+    name_suggestions = relationship("NameSuggestion", back_populates="activity")
 
     activity_id = Column(BigInteger, unique=True)
     description = Column(String, nullable=True)
@@ -127,3 +128,15 @@ class Activity(Base):
         for column in self.__table__.columns:
             d[column.name] = getattr(self, column.name)
         return d
+
+
+class NameSuggestion(Base):
+    __tablename__ = "name_suggestion"
+    uuid = Column(UUID, primary_key=True, nullable=False, default=uuid.uuid4)
+    activity_id = Column(BigInteger, ForeignKey("activity.activity_id"))
+    activity = relationship(Activity.__name__)
+    name = Column(String)
+    description = Column(String)
+    probability = Column(Float)
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
+    updated_at = Column(DateTime, nullable=False, default=datetime.datetime.now)

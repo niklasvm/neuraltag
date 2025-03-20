@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from cryptography.fernet import Fernet
 import base64
 
-from src.app.db.models import Activity, Auth, Base, User
+from src.app.db.models import Activity, Auth, Base, NameSuggestion, User
 from sqlalchemy import insert
 
 logging.basicConfig(level=logging.INFO)
@@ -174,3 +174,10 @@ class Database:
                 session.delete(user)
                 session.commit()
                 logger.info(f"Deleted user {athlete_id}")
+
+
+    def add_name_suggestion(self,name_suggestion: NameSuggestion):
+        with self.Session() as session:
+            session.add(name_suggestion)
+            session.commit()
+            logger.info(f"Added name suggestion {name_suggestion.activity_id} to the database")
