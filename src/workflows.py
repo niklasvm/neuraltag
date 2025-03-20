@@ -6,10 +6,10 @@ from pushbullet import Pushbullet
 
 
 from src.app.db.adapter import Database
+from src.app.core.config import Settings
 
 # from src.app.db.strava_db_ops import strava_fetch_and_load_activity
 from src.app.db.external_api_data_handler import ExternalAPIDataHandler
-from src.strava import get_strava_client
 
 
 # Set up logging
@@ -17,16 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def rename_workflow(
-    activity_id: int,
-    athlete_id: int,
-    client_id: int,
-    client_secret: str,
-    gemini_api_key: str,
-    pushbullet_api_key: str,
-    postgres_connection_string: str,
-    encryption_key: bytes,
-):
+def rename_workflow(activity_id: int, athlete_id: int, settings: Settings):
     time_start = datetime.datetime.now()
 
     days = 365
@@ -37,11 +28,7 @@ def rename_workflow(
 
     strava_db_operations = ExternalAPIDataHandler.from_athlete_id(
         athlete_id=athlete_id,
-        client_id=client_id,
-        client_secret=client_secret,
-        postgres_connection_string=postgres_connection_string,
-        encryption_key=encryption_key,
-        gemini_api_key=gemini_api_key,
+        settings=settings,
     )
 
     activity = strava_db_operations.fetch_and_load_activity(
@@ -50,13 +37,17 @@ def rename_workflow(
 
     existing_description = activity.description
 
-    if not is_test and description_to_append in str(existing_description) and activity.name != "Rename":
+    if (
+        not is_test
+        and description_to_append in str(existing_description)
+        and activity.name != "Rename"
+    ):
         logger.info(f"Activity {activity_id} already named")
         return
 
     db = Database(
-        connection_string=postgres_connection_string,
-        encryption_key=encryption_key,
+        connection_string=settings.postgres_connection_string,
+        encryption_key=settings.encryption_key,
     )
 
     before = activity.start_date_local + datetime.timedelta(days=1)
@@ -107,11 +98,15 @@ def rename_workflow(
     )
 
     # sort names descending by probability
-    name_suggestions = sorted(name_suggestions, key=lambda x: x.probability, reverse=True)
+    name_suggestions = sorted(
+        name_suggestions, key=lambda x: x.probability, reverse=True
+    )
 
     # print suggestions
     for i, result in enumerate(name_suggestions):
-        logger.info(f"Name suggestion {i+1}: {result.name} ({result.probability}): {result.description}")
+        logger.info(
+            f"Name suggestion {i + 1}: {result.name} ({result.probability}): {result.description}"
+        )
 
     top_name_suggestion = name_suggestions[0].name
     top_name_description = name_suggestions[0].description
@@ -133,11 +128,7 @@ def rename_workflow(
     logger.info(f"New description: {new_description}")
 
     if not is_test:
-
-        client = get_strava_client(
-            client_id=client_id,
-            client_secret=client_secret,
-        )
+        client = strava_db_operations.client
         client.update_activity(
             activity_id=activity_id,
             name=top_name_suggestion,
@@ -145,5 +136,5 @@ def rename_workflow(
         )
 
         # notify via pushbullet
-        pb = Pushbullet(pushbullet_api_key)
+        pb = Pushbullet(settings.pushbullet_api_key)
         pb.push_note(title=top_name_suggestion, body=top_name_description)

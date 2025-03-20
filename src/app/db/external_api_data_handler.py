@@ -2,11 +2,13 @@
 This module contains the ExternalAPIDataHandler class which is responsible for
 interacting with external APIs and storing the data in the database.
 """
+
 from __future__ import annotations
 import datetime
 import uuid
 import pandas as pd
 from stravalib import Client
+from src.app.core.config import Settings
 from src.app.db.adapter import Database
 from src.app.db.models import Activity, Auth, NameSuggestion, User
 from src.data import summary_activity_to_activity_model
@@ -15,23 +17,14 @@ from src.strava import exchange_code_for_token
 
 
 class ExternalAPIDataHandler:
-    def __init__(
-        self,
-        auth_uuid: int,
-        client_id: str,
-        client_secret: str,
-        postgres_connection_string: str,
-        encryption_key: bytes,
-        gemini_api_key: str,
-    ):
+    def __init__(self, auth_uuid: int, settings: Settings):
         self.auth_uuid = auth_uuid
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.postgres_connection_string = postgres_connection_string
-        self.encryption_key = encryption_key
-        self.gemini_api_key = gemini_api_key
+        self.settings = settings
 
-        self.db = Database(postgres_connection_string, encryption_key=encryption_key)
+        self.db = Database(
+            self.settings.postgres_connection_string,
+            encryption_key=self.settings.encryption_key,
+        )
         auth = self.db.get_auth(auth_uuid)
 
         self.client: Client = Client(
@@ -40,8 +33,8 @@ class ExternalAPIDataHandler:
             token_expires=auth.expires_at,
         )
         self.client.refresh_access_token(
-            client_id=client_id,
-            client_secret=client_secret,
+            client_id=self.settings.strava_client_id,
+            client_secret=self.settings.strava_client_secret,
             refresh_token=auth.refresh_token,
         )
 
@@ -49,38 +42,29 @@ class ExternalAPIDataHandler:
     def from_athlete_id(
         cls,
         athlete_id: int,
-        client_id: str,
-        client_secret: str,
-        postgres_connection_string: str,
-        encryption_key: bytes,
-        gemini_api_key: str,
+        settings: Settings,
     ):
-        db = Database(postgres_connection_string, encryption_key=encryption_key)
-        auth = db.get_auth_by_athlete_id(athlete_id)
-        return cls(
-            auth_uuid=auth.uuid,
-            client_id=client_id,
-            client_secret=client_secret,
-            postgres_connection_string=postgres_connection_string,
-            encryption_key=encryption_key,
-            gemini_api_key=gemini_api_key
+        db = Database(
+            settings.postgres_connection_string, encryption_key=settings.encryption_key
         )
+        auth = db.get_auth_by_athlete_id(athlete_id)
+        return cls(auth_uuid=auth.uuid, settings=settings)
 
     @classmethod
     def authenticate_and_store(
         cls,
         code: str,
         scope: str,
-        client_id: int,
-        client_secret: str,
-        postgres_connection_string: str,
-        encryption_key: bytes,
-        gemini_api_key: str,
+        settings: Settings,
     ) -> ExternalAPIDataHandler:
         token_response = exchange_code_for_token(
-            strava_client_id=client_id, strava_client_secret=client_secret, code=code
+            strava_client_id=settings.strava_client_id,
+            strava_client_secret=settings.strava_client_secret,
+            code=code,
         )
-        db = Database(postgres_connection_string, encryption_key=encryption_key)
+        db = Database(
+            settings.postgres_connection_string, encryption_key=settings.encryption_key
+        )
 
         auth = Auth(
             uuid=uuid.uuid4(),
@@ -91,14 +75,7 @@ class ExternalAPIDataHandler:
         )
         db.add_auth(auth)
 
-        return cls(
-            auth_uuid=auth.uuid,
-            client_id=client_id,
-            client_secret=client_secret,
-            postgres_connection_string=postgres_connection_string,
-            encryption_key=encryption_key,
-            gemini_api_key=gemini_api_key
-        )
+        return cls(auth_uuid=auth.uuid, settings=settings)
 
     def fetch_and_load_historic_activities(
         self,
@@ -129,7 +106,7 @@ class ExternalAPIDataHandler:
         activity = summary_activity_to_activity_model(activity)
         self.db.add_activity(activity)
         return activity
-    
+
     def fetch_and_load_name_suggestions(
         self,
         activity_id: int,
@@ -137,12 +114,11 @@ class ExternalAPIDataHandler:
         number_of_options: int,
         temperature: int,
     ) -> list[NameSuggestion]:
-
-        name_results:list[NameResult] = generate_activity_name_with_gemini(
+        name_results: list[NameResult] = generate_activity_name_with_gemini(
             activity_id=activity_id,
             data=activities_df,
             number_of_options=number_of_options,
-            api_key=self.gemini_api_key,
+            api_key=self.settings.gemini_api_key,
             temperature=temperature,
         )
 
@@ -151,10 +127,10 @@ class ExternalAPIDataHandler:
             name_suggestion = NameSuggestion(
                 activity_id=activity_id,
                 name=name_result.name,
-                description = name_result.description,
-                probability = name_result.probability,
+                description=name_result.description,
+                probability=name_result.probability,
             )
             self.db.add_name_suggestion(name_suggestion)
             name_suggestions.append(name_suggestion)
-        
+
         return name_suggestions

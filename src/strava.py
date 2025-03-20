@@ -56,4 +56,3 @@ def fetch_historic_activity_data(
 def fetch_activity_data(client: Client, activity_id: int) -> DetailedActivity:
     activity = client.get_activity(activity_id)
     return activity
-

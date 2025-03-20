@@ -58,12 +58,8 @@ async def login(
         strava_db_operations = ExternalAPIDataHandler.authenticate_and_store(
             code=login_request.code,
             scope=login_request.scope,
-            client_id=settings.strava_client_id,
-            client_secret=settings.strava_client_secret,
-            postgres_connection_string=settings.postgres_connection_string,
-            encryption_key=settings.encryption_key,
+            settings=settings,
         )
-        auth_uuid = strava_db_operations.auth_uuid
     except Exception:
         logger.exception("Error during login:")
         raise HTTPException(status_code=500, detail="Failed to log in user")

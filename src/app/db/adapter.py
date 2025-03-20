@@ -175,9 +175,10 @@ class Database:
                 session.commit()
                 logger.info(f"Deleted user {athlete_id}")
 
-
-    def add_name_suggestion(self,name_suggestion: NameSuggestion):
+    def add_name_suggestion(self, name_suggestion: NameSuggestion):
         with self.Session() as session:
             session.add(name_suggestion)
             session.commit()
-            logger.info(f"Added name suggestion {name_suggestion.activity_id} to the database")
+            logger.info(
+                f"Added name suggestion {name_suggestion.activity_id} to the database"
+            )
