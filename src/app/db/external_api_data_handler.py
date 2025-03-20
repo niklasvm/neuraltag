@@ -5,6 +5,7 @@ interacting with external APIs and storing the data in the database.
 
 from __future__ import annotations
 import datetime
+import logging
 import uuid
 import pandas as pd
 from stravalib import Client
@@ -15,6 +16,7 @@ from src.data import summary_activity_to_activity_model
 from src.gemini import NameResult, generate_activity_name_with_gemini
 from src.strava import exchange_code_for_token
 
+logger = logging.getLogger(__name__)
 
 class ExternalAPIDataHandler:
     def __init__(self, auth_uuid: int, settings: Settings):
@@ -86,15 +88,21 @@ class ExternalAPIDataHandler:
         athlete = self.client.get_athlete()
         self.db.add_user(User(athlete_id=athlete.id, auth_uuid=self.auth_uuid))
 
+
         summary_activities = self.client.get_activities(after=after, before=before)
         summary_activities = [x for x in summary_activities]
+        logger.info(f"Fetched {len(summary_activities)} activities")
 
         activities: list[Activity] = []
+        
+        logger.info("Processing activities...")
         for summary_activity in summary_activities:
             activity = summary_activity_to_activity_model(summary_activity)
             activities.append(activity)
 
+        logger.info("Loading activities into the database...")
         self.db.add_activities_bulk(activities)
+        logger.info("Activities loaded into the database")
 
         return activities
 
