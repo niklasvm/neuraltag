@@ -22,7 +22,7 @@ def rename_workflow(activity_id: int, athlete_id: int, settings: Settings):
 
     days = 365
     temperature = 2
-    is_test = True
+    is_test = False
 
     description_to_append = "named with NeuralTag 🤖"
 
