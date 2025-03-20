@@ -2,76 +2,66 @@ import datetime
 import logging
 
 import pandas as pd
-
-
-from src.data import (
-    process_activity,
-)
-
-from src.gemini import generate_activity_name_with_gemini
 from pushbullet import Pushbullet
 
-from src.strava import (
-    fetch_activity_data,
-    fetch_historic_activity_data,
-    get_strava_client,
-)
+
+from src.app.db.adapter import Database
+from src.app.core.config import Settings
+
+# from src.app.db.strava_db_ops import strava_fetch_and_load_activity
+from src.app.db.external_api_data_handler import ExternalAPIDataHandler
+
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def rename_workflow(
-    activity_id: int,
-    access_token: str,
-    refresh_token: str,
-    expires_at: int,
-    client_id: int,
-    client_secret: str,
-    gemini_api_key: str,
-    pushbullet_api_key: str,
-):
+def rename_workflow(activity_id: int, athlete_id: int, settings: Settings):
     time_start = datetime.datetime.now()
 
     days = 365
     temperature = 2
+    is_test = True
 
     description_to_append = "named with NeuralTag 🤖"
 
-    client = get_strava_client(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        expires_at=expires_at,
-        strava_client_id=client_id,
-        strava_client_secret=client_secret,
+    strava_db_operations = ExternalAPIDataHandler.from_athlete_id(
+        athlete_id=athlete_id,
+        settings=settings,
     )
 
-    activity = fetch_activity_data(
-        client=client,
+    activity = strava_db_operations.fetch_and_load_activity(
         activity_id=activity_id,
     )
+
     existing_description = activity.description
 
-    if description_to_append in str(activity.description) and activity.name != "Rename":
+    if (
+        not is_test
+        and description_to_append in str(existing_description)
+        and activity.name != "Rename"
+    ):
         logger.info(f"Activity {activity_id} already named")
         return
 
-    before = activity.start_date_local + datetime.timedelta(days=1)
-    after = before - datetime.timedelta(days=days)
-    activities = fetch_historic_activity_data(
-        client=client,
-        after=after,
-        before=before,
+    db = Database(
+        connection_string=settings.postgres_connection_string,
+        encryption_key=settings.encryption_key,
     )
 
-    activity = process_activity(activity)
-    activities = [process_activity(x) for x in activities]
+    before = activity.start_date_local + datetime.timedelta(days=1)
+    after = before - datetime.timedelta(days=days)
+    activities = db.get_activities_by_date_range(
+        athlete_id=activity.athlete_id, before=before, after=after
+    )
 
-    activities_df = pd.DataFrame(activities)
+    activities = [activity] + activities
+
+    activities_df = pd.DataFrame([activity.dict() for activity in activities])
 
     columns = [
-        "id",
+        "activity_id",
         "date",
         "time",
         "day_of_week",
@@ -93,21 +83,33 @@ def rename_workflow(
         "map_area",
     ]
 
-    activities_df = activities_df[activities_df["sport_type"] == activity["sport_type"]]
+    activities_df = activities_df[activities_df["sport_type"] == activity.sport_type]
+
     activities_df = activities_df[columns]
     activities_df = activities_df.dropna(axis=1, how="all")
 
-    name_results = generate_activity_name_with_gemini(
+    activities_df = activities_df.rename({"activity_id": "id"}, axis=1)
+
+    name_suggestions = strava_db_operations.fetch_and_load_name_suggestions(
         activity_id=activity_id,
-        data=activities_df,
-        number_of_options=3,
-        api_key=gemini_api_key,
+        activities_df=activities_df,
+        number_of_options=10,
         temperature=temperature,
     )
-    logger.info(f"Name suggestions: {name_results}")
 
-    top_name_suggestion = name_results[0].name
-    top_name_description = name_results[0].description
+    # sort names descending by probability
+    name_suggestions = sorted(
+        name_suggestions, key=lambda x: x.probability, reverse=True
+    )
+
+    # print suggestions
+    for i, result in enumerate(name_suggestions):
+        logger.info(
+            f"Name suggestion {i + 1}: {result.name} ({result.probability}): {result.description}"
+        )
+
+    top_name_suggestion = name_suggestions[0].name
+    top_name_description = name_suggestions[0].description
     logger.info(
         f"Top name suggestion for activity {activity_id}: {top_name_suggestion}: {top_name_description}"
     )
@@ -124,12 +126,15 @@ def rename_workflow(
     else:
         new_description = existing_description
     logger.info(f"New description: {new_description}")
-    client.update_activity(
-        activity_id=activity_id,
-        name=top_name_suggestion,
-        description=new_description,
-    )
 
-    # notify via pushbullet
-    pb = Pushbullet(pushbullet_api_key)
-    pb.push_note(title=top_name_suggestion, body=top_name_description)
+    if not is_test:
+        client = strava_db_operations.client
+        client.update_activity(
+            activity_id=activity_id,
+            name=top_name_suggestion,
+            description=new_description,
+        )
+
+        # notify via pushbullet
+        pb = Pushbullet(settings.pushbullet_api_key)
+        pb.push_note(title=top_name_suggestion, body=top_name_description)

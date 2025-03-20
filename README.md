@@ -1,7 +1,8 @@
-# strava
+<img src="src/app/static/images/logo_cropped.png" width="200">
 
-Exploring the strava api from python
 
-## Updating activity names 
+Application to automatically name activities on Strava using AI.
 
-A scheduled github workflow automatically loads data from the Strava API and then uses Google Gemini to update the activity names. The workflow is defined in `.github/workflows/update_activity_names.yml`.
+Check it out at [https://strava-983811446432.africa-south1.run.app](https://strava-983811446432.africa-south1.run.app)
+
+

@@ -1,11 +1,13 @@
+"""Module for interacting with the Strava API."""
+
 from stravalib import Client
 import datetime
-from stravalib.model import DetailedActivity, SummaryActivity, SummaryAthlete
+from stravalib.model import DetailedActivity, SummaryActivity
 
 
-def exchange_code_for_athlete_and_token(
+def exchange_code_for_token(
     strava_client_id: int, strava_client_secret: str, code: str
-) -> tuple[SummaryAthlete, dict[str, str]]:
+) -> dict[str, str]:
     """Exchange a Strava code for an access token."""
     client = Client()
     token_response = client.exchange_code_for_token(
@@ -17,9 +19,7 @@ def exchange_code_for_athlete_and_token(
     access_token = token_response.get("access_token")
     client.access_token = access_token
 
-    athlete = client.get_athlete()
-
-    return athlete, token_response
+    return token_response
 
 
 def get_strava_client(

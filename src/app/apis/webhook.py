@@ -24,16 +24,7 @@ async def handle_post_event(
     """
     Handles the webhook event from Strava.
     """
-    background_tasks.add_task(
-        process_post_event,
-        content,
-        settings.strava_client_id,
-        settings.strava_client_secret,
-        settings.postgres_connection_string,
-        settings.gemini_api_key,
-        settings.pushbullet_api_key,
-        settings.encryption_key,
-    )
+    background_tasks.add_task(process_post_event, content, settings=settings)
 
     return JSONResponse(content={"message": "Received webhook event"}, status_code=200)
 

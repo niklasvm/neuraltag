@@ -6,10 +6,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from src.app.pages import home
-from src.app.db.adapter import Database
 
 from src.app.apis import auth, webhook
-from src.app.core.config import settings
 
 load_dotenv(override=True)
 
@@ -30,23 +28,8 @@ app.mount("/static", StaticFiles(directory="src/app/static"), name="static")
 
 
 @app.get("/welcome", response_class=HTMLResponse)
-async def welcome(request: Request, uuid: str):
-    db = Database(
-        settings.postgres_connection_string, encryption_key=settings.encryption_key
-    )
-
-    try:
-        user = db.get_user(uuid)
-        if user is None:
-            return templates.TemplateResponse(
-                request, "error.html", {"error": "User not found"}
-            )  # Provide error message
-        return templates.TemplateResponse(request, "welcome.html")
-    except Exception:
-        logger.exception(f"Error fetching User with UUID {uuid}:")
-        return templates.TemplateResponse(
-            request, "error.html", {"error": "User not found"}
-        )  # Provide error message
+async def welcome(request: Request):
+    return templates.TemplateResponse(request, "welcome.html")
 
 
 @app.get("/favicon.ico", include_in_schema=False)
