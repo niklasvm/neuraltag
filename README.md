@@ -3,6 +3,6 @@
 
 Application to automatically name activities on Strava using AI.
 
-Check it out at [https://neuraltag.ddns.net](neuraltag.ddns.net)
+Check it out at [https://neuraltag.ddns.net](https://neuraltag.ddns.net)
 
 
