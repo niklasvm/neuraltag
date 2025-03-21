@@ -11,3 +11,12 @@ h1 {
 p {
     color: #666;
 }
+
+ul {
+    color: #666;
+}
+
+li {
+    color: #666;
+    list-style-position: inside;
+}

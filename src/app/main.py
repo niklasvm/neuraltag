@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 AUTHORIZATION_CALLBACK = "/login"
 
-app = FastAPI(debug=True)
+app = FastAPI(docs_url=None, redoc_url=None,openapi_url=None)  # Create FastAPI instance
 
 templates = Jinja2Templates(directory="src/app/templates")  # Configure Jinja2
 
