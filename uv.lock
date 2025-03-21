@@ -1615,7 +1615,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.32.3" },
     { name = "shapely", specifier = ">=2.0.7" },
     { name = "sqlalchemy", specifier = ">=2.0.38" },
-    { name = "stravalib", specifier = ">=2.2" },
+    { name = "stravalib", specifier = "==2.3.0" },
     { name = "toml", specifier = ">=0.10.2" },
 ]
 
@@ -1631,7 +1631,7 @@ dev = [
 
 [[package]]
 name = "stravalib"
-version = "2.2"
+version = "2.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "arrow" },
@@ -1640,9 +1640,9 @@ dependencies = [
     { name = "pytz" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/40/6e/fdc819ee94009e5d958924b914d7dc02c7a381511f55d4dce9643140f0b8/stravalib-2.2.tar.gz", hash = "sha256:e4f96e5db81c279cee10d76d7c607c348c43e827fc7543a505babb6f0f74d9a3", size = 456059 }
+sdist = { url = "https://files.pythonhosted.org/packages/70/57/d0115f808cd50829e09961e7688ccb8cd0cf1e631e878e25579d7f98e0ee/stravalib-2.3.tar.gz", hash = "sha256:13e83ac7bab7bdcd898599867c61346e5bd329497cf3f7d6cbb0a8d0211a9f89", size = 4119780 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e9/48/d4630695d0839cce5535ac92b1691c2397497e26b238b2b339c1d7aa5e63/stravalib-2.2-py3-none-any.whl", hash = "sha256:45f9b7b25073701411387b504a8314a95365c20843080a2c4a51f7010a452755", size = 125040 },
+    { url = "https://files.pythonhosted.org/packages/44/47/2f4ff23b1f7e6b59ffce2d4e26f0676637672792fe81ff2025e27b5083ba/stravalib-2.3-py3-none-any.whl", hash = "sha256:93921f51d87d5cee70415dd374a8a4abb28610d95c0ac1c7c5334af60d509b8d", size = 125057 },
 ]
 
 [[package]]
