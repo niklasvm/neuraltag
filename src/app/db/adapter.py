@@ -175,6 +175,14 @@ class Database:
                 session.commit()
                 logger.info(f"Deleted user {athlete_id}")
 
+    def delete_auth(self, uuid: str):
+        with self.Session() as session:
+            auth = session.query(Auth).filter(Auth.uuid == uuid).first()
+            if auth:
+                session.delete(auth)
+                session.commit()
+                logger.info(f"Deleted auth {uuid}")
+
     def add_name_suggestion(self, name_suggestion: NameSuggestion):
         with self.Session() as session:
             session.add(name_suggestion)
