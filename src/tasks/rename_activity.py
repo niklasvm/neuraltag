@@ -91,6 +91,9 @@ def rename_workflow(activity: Activity, settings: Settings):
         number_of_options=10,
         temperature=temperature,
     )
+    if len(name_suggestions) == 0:
+        logger.info(f"No name suggestions for activity {activity.activity_id}")
+        return
 
     # sort names descending by probability
     name_suggestions = sorted(

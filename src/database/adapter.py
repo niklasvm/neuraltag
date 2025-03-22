@@ -7,7 +7,14 @@ from sqlalchemy.orm import sessionmaker
 from cryptography.fernet import Fernet
 import base64
 
-from src.database.models import Activity, Auth, Base, NameSuggestion, User
+from src.database.models import (
+    Activity,
+    Auth,
+    Base,
+    NameSuggestion,
+    PromptResponse,
+    User,
+)
 from sqlalchemy import insert
 
 logging.basicConfig(level=logging.INFO)
@@ -218,3 +225,9 @@ class Database:
                 session.delete(activity)
                 session.commit()
                 logger.info(f"Deleted activity {activity_id}")
+
+    def add_prompt_response(self, prompt_response: PromptResponse):
+        with self.Session() as session:
+            session.add(prompt_response)
+            session.commit()
+            logger.info(f"Added prompt response {prompt_response.uuid} to the database")

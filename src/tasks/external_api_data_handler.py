@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from stravalib import Client
 from src.app.config import Settings
 from src.database.adapter import Database
-from src.database.models import Activity, Auth, NameSuggestion, User
+from src.database.models import Activity, Auth, NameSuggestion, PromptResponse, User
 from src.tasks.data import summary_activity_to_activity_model
 import json
 from google import genai
@@ -125,13 +125,15 @@ class ExternalAPIDataHandler:
         number_of_options: int,
         temperature: int,
     ) -> list[NameSuggestion]:
-        name_results: list[NameResult] = generate_activity_name_with_gemini(
+        name_results, prompt_response = generate_activity_name_with_gemini(
             activity_id=activity_id,
             data=activities_df,
             number_of_options=number_of_options,
             api_key=self.settings.gemini_api_key,
             temperature=temperature,
         )
+
+        self.db.add_prompt_response(prompt_response)
 
         name_suggestions = []
         for name_result in name_results:
@@ -180,7 +182,7 @@ def generate_activity_name_with_gemini(
     number_of_options: int,
     api_key: str,
     temperature: Optional[float] = None,
-) -> list[NameResult]:
+) -> tuple[list[NameResult], PromptResponse]:
     input = data[data["id"] == activity_id].iloc[0]
     context_data = data.drop(data[data["id"] == activity_id].index)
 
@@ -209,10 +211,19 @@ def generate_activity_name_with_gemini(
         config=config,
     )
 
+    prompt_response = PromptResponse(
+        activity_id=activity_id,
+        prompt=rendered_prompt,
+        response=response.text,
+    )
+
     # parse response
-    formatted_results = "\n".join(response.text.strip().split("\n")[1:-1])
-    results = json.loads(formatted_results)
+    results = []
+    try:
+        formatted_results = "\n".join(response.text.strip().split("\n")[1:-1])
+        results = json.loads(formatted_results)
+        results = [NameResult(**result) for result in results]
+    except Exception:
+        pass
 
-    results = [NameResult(**result) for result in results]
-
-    return results
+    return results, prompt_response

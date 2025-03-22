@@ -53,6 +53,9 @@ class Activity(Base):
     athlete_id = Column(Integer, ForeignKey("user.athlete_id"))
     user = relationship(User.__name__, back_populates="activity")
     name_suggestions = relationship("NameSuggestion", back_populates="activity")
+    prompt_responses = relationship(
+        "PromptResponse", back_populates="activity", cascade="all, delete-orphan"
+    )
 
     activity_id = Column(BigInteger, unique=True)
     description = Column(String, nullable=True)
@@ -128,6 +131,17 @@ class Activity(Base):
         for column in self.__table__.columns:
             d[column.name] = getattr(self, column.name)
         return d
+
+
+class PromptResponse(Base):
+    __tablename__ = "prompt_response"
+    uuid = Column(UUID, primary_key=True, nullable=False, default=uuid.uuid4)
+    activity_id = Column(BigInteger, ForeignKey("activity.activity_id"))
+    activity = relationship(Activity.__name__)
+    prompt = Column(String)
+    response = Column(String)
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
+    updated_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
 
 class NameSuggestion(Base):
