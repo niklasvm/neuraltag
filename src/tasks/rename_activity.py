@@ -32,13 +32,13 @@ def rename_workflow(activity: Activity, settings: Settings):
 
     existing_description = activity.description
 
-    if (
-        not is_test
-        and NEURALTAG_SIGNATURE in str(existing_description)
-        and activity.name != "Rename"
-    ):
-        logger.info(f"Activity {activity.activity_id} already named")
-        return
+    # if (
+    #     not is_test
+    #     and NEURALTAG_SIGNATURE in str(existing_description)
+    #     and activity.name != "Rename"
+    # ):
+    #     logger.info(f"Activity {activity.activity_id} already named")
+    #     return
 
     db = Database(
         connection_string=settings.postgres_connection_string,
