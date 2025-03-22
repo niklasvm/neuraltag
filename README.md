@@ -3,6 +3,6 @@
 
 Application to automatically name activities on Strava using AI.
 
-Check it out at [https://strava-983811446432.africa-south1.run.app](https://strava-983811446432.africa-south1.run.app)
+Check it out at [https://neuraltag.ddns.net](https://neuraltag.ddns.net)
 
 
