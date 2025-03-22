@@ -167,6 +167,19 @@ class Database:
                 .all()
             )
 
+    def get_activity_by_id(self, activity_id: int) -> Activity:
+        with self.Session() as session:
+            activity = (
+                session.query(Activity)
+                .filter(Activity.activity_id == activity_id)
+                .first()
+            )
+            if activity:
+                return activity
+            else:
+                logger.info(f"Activity {activity_id} not found")
+                raise ValueError(f"Activity {activity_id} not found")
+
     def delete_user(self, athlete_id: int):
         with self.Session() as session:
             user = session.query(User).filter(User.athlete_id == athlete_id).first()

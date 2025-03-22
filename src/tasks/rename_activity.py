@@ -8,40 +8,36 @@ from pushbullet import Pushbullet
 from src.database.adapter import Database
 from src.app.config import Settings
 
+from src.database.models import Activity
 from src.tasks.external_api_data_handler import ExternalAPIDataHandler
 
+NEURALTAG_SIGNATURE = "named with NeuralTag 🤖"
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def rename_workflow(activity_id: int, athlete_id: int, settings: Settings):
+def rename_workflow(activity: Activity, settings: Settings):
     time_start = datetime.datetime.now()
 
     days = 365
     temperature = 2
     is_test = False
 
-    description_to_append = "named with NeuralTag 🤖"
-
     strava_db_operations = ExternalAPIDataHandler.from_athlete_id(
-        athlete_id=athlete_id,
+        athlete_id=activity.athlete_id,
         settings=settings,
-    )
-
-    activity = strava_db_operations.fetch_and_load_activity(
-        activity_id=activity_id,
     )
 
     existing_description = activity.description
 
     if (
         not is_test
-        and description_to_append in str(existing_description)
+        and NEURALTAG_SIGNATURE in str(existing_description)
         and activity.name != "Rename"
     ):
-        logger.info(f"Activity {activity_id} already named")
+        logger.info(f"Activity {activity.activity_id} already named")
         return
 
     db = Database(
@@ -90,7 +86,7 @@ def rename_workflow(activity_id: int, athlete_id: int, settings: Settings):
     activities_df = activities_df.rename({"activity_id": "id"}, axis=1)
 
     name_suggestions = strava_db_operations.fetch_and_load_name_suggestions(
-        activity_id=activity_id,
+        activity_id=activity.activity_id,
         activities_df=activities_df,
         number_of_options=10,
         temperature=temperature,
@@ -110,7 +106,7 @@ def rename_workflow(activity_id: int, athlete_id: int, settings: Settings):
     top_name_suggestion = name_suggestions[0].name
     top_name_description = name_suggestions[0].description
     logger.info(
-        f"Top name suggestion for activity {activity_id}: {top_name_suggestion}: {top_name_description}"
+        f"Top name suggestion for activity {activity.activity_id}: {top_name_suggestion}: {top_name_description}"
     )
 
     time_end = datetime.datetime.now()
@@ -120,8 +116,8 @@ def rename_workflow(activity_id: int, athlete_id: int, settings: Settings):
     if existing_description is None:
         existing_description = ""
 
-    if description_to_append not in str(existing_description):
-        new_description = f"{existing_description}\n\n{description_to_append}".strip()
+    if NEURALTAG_SIGNATURE not in str(existing_description):
+        new_description = f"{existing_description}\n\n{NEURALTAG_SIGNATURE}".strip()
     else:
         new_description = existing_description
     logger.info(f"New description: {new_description}")
@@ -129,7 +125,7 @@ def rename_workflow(activity_id: int, athlete_id: int, settings: Settings):
     if not is_test:
         client = strava_db_operations.client
         client.update_activity(
-            activity_id=activity_id,
+            activity_id=activity.activity_id,
             name=top_name_suggestion,
             description=new_description,
         )
