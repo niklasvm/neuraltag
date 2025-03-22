@@ -1,15 +1,15 @@
 import logging
 
-from src.app.db.adapter import Database
+from src.database.adapter import Database
 from src.app.schemas.webhook_post_request import WebhookPostRequest
-from src.workflows import rename_workflow  # Import your route modules
-from src.app.core.config import Settings
+from src.tasks.rename_activity import rename_workflow  # Import your route modules
+from src.app.config import Settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def process_post_event(content: WebhookPostRequest, settings: Settings):
+def process_post_request(content: WebhookPostRequest, settings: Settings):
     """
     Processes the Strava webhook event by renaming the activity.
     """
@@ -36,8 +36,7 @@ def process_post_event(content: WebhookPostRequest, settings: Settings):
             )
 
     # handle unsubscribe events
-
-    if content.object_type == "athlete" and content.aspect_type == "update":
+    elif content.object_type == "athlete" and content.aspect_type == "update":
         if content.updates is not None and "authorized" in content.updates:
             if content.updates.get("authorized") == "false":
                 logger.info(f"Received unsubscribe event: {content}")
@@ -51,3 +50,17 @@ def process_post_event(content: WebhookPostRequest, settings: Settings):
                 )
                 db.delete_user(athlete_id)
                 logger.info(f"Successfully deleted athlete {athlete_id} from database")
+
+    # handle activity delete events
+    elif content.aspect_type == "delete" and content.object_type == "activity":
+        logger.info(f"Received delete event: {content}")
+        # delete activity from database
+        activity_id = content.object_id
+        db = Database(
+            settings.postgres_connection_string, encryption_key=settings.encryption_key
+        )
+        db.delete_activity(activity_id=activity_id, athlete_id=content.owner_id)
+        logger.info(f"Successfully deleted activity {activity_id} from database")
+
+    else:
+        logger.info(f"Received unsupported event: {content}")

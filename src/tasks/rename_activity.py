@@ -5,11 +5,10 @@ import pandas as pd
 from pushbullet import Pushbullet
 
 
-from src.app.db.adapter import Database
-from src.app.core.config import Settings
+from src.database.adapter import Database
+from src.app.config import Settings
 
-# from src.app.db.strava_db_ops import strava_fetch_and_load_activity
-from src.app.db.external_api_data_handler import ExternalAPIDataHandler
+from src.tasks.external_api_data_handler import ExternalAPIDataHandler
 
 
 # Set up logging

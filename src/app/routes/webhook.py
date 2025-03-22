@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 
 from src.app.schemas.webhook_get_request import WebhookGetRequest
 from src.app.schemas.webhook_post_request import WebhookPostRequest
-from src.app.tasks.post_event import process_post_event
-from src.app.core.config import settings
+from src.app.config import settings
+from src.tasks.post_event import process_post_request
 
 load_dotenv(override=True)
 
@@ -24,7 +24,7 @@ async def handle_post_event(
     """
     Handles the webhook event from Strava.
     """
-    background_tasks.add_task(process_post_event, content, settings=settings)
+    background_tasks.add_task(process_post_request, content, settings=settings)
 
     return JSONResponse(content={"message": "Received webhook event"}, status_code=200)
 

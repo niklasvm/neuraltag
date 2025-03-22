@@ -2,8 +2,6 @@ from logging.config import fileConfig
 import os
 
 from dotenv import load_dotenv
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
 
 from alembic import context
 
@@ -20,7 +18,8 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from src.app.db.models import Base
+from src.database.models import Base  # noqa: E402
+
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -41,10 +40,10 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    
+
     load_dotenv(override=True)
-    url=os.environ["POSTGRES_CONNECTION_STRING"]
-    
+    url = os.environ["POSTGRES_CONNECTION_STRING"]
+
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -64,13 +63,12 @@ def run_migrations_online() -> None:
 
     """
     from sqlalchemy import create_engine
+
     load_dotenv(override=True)
     connectable = create_engine(os.environ["POSTGRES_CONNECTION_STRING"])
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

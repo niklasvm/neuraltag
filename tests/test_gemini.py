@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 import pandas as pd
-from src.gemini import generate_activity_name_with_gemini, NameResult
+from src.tasks.gemini import generate_activity_name_with_gemini, NameResult
 
 
 class TestGemini(unittest.TestCase):

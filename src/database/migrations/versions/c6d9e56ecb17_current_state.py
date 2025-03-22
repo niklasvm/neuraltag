@@ -1,16 +1,13 @@
 """current state
 
 Revision ID: c6d9e56ecb17
-Revises: 
+Revises:
 Create Date: 2025-03-21 18:42:28.936086
 
 """
-from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
-revision = 'c6d9e56ecb17'
+revision = "c6d9e56ecb17"
 down_revision = None
 branch_labels = None
 depends_on = None

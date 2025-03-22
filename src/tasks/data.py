@@ -3,7 +3,7 @@ from stravalib.model import SummaryActivity
 from typing import Any
 from shapely.geometry import Polygon
 
-from src.app.db.models import Activity
+from src.database.models import Activity
 
 
 def process_activity(activity: SummaryActivity) -> dict[str, Any]:
