@@ -1,6 +1,6 @@
 import logging
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -30,6 +30,10 @@ app.mount("/static", StaticFiles(directory="src/app/static"), name="static")
 
 @app.get("/welcome", response_class=HTMLResponse)
 async def welcome(request: Request):
+    if request.query_params:
+        raise HTTPException(
+            status_code=400, detail="Query parameters are not supported."
+        )
     return templates.TemplateResponse(request, "welcome.html")
 
 
