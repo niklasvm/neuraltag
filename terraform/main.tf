@@ -43,7 +43,7 @@ resource "google_cloud_run_v2_service" "default" {
         startup_cpu_boost = true
         limits = {
           cpu    = "4000m"
-          memory = "1024Mi"
+          memory = "2Gi"
         }
       }
       env {
