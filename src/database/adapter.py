@@ -7,7 +7,14 @@ from sqlalchemy.orm import sessionmaker
 from cryptography.fernet import Fernet
 import base64
 
-from src.app.db.models import Activity, Auth, Base, NameSuggestion, User
+from src.database.models import (
+    Activity,
+    Auth,
+    Base,
+    NameSuggestion,
+    PromptResponse,
+    User,
+)
 from sqlalchemy import insert
 
 logging.basicConfig(level=logging.INFO)
@@ -167,6 +174,19 @@ class Database:
                 .all()
             )
 
+    def get_activity_by_id(self, activity_id: int) -> Activity:
+        with self.Session() as session:
+            activity = (
+                session.query(Activity)
+                .filter(Activity.activity_id == activity_id)
+                .first()
+            )
+            if activity:
+                return activity
+            else:
+                logger.info(f"Activity {activity_id} not found")
+                raise ValueError(f"Activity {activity_id} not found")
+
     def delete_user(self, athlete_id: int):
         with self.Session() as session:
             user = session.query(User).filter(User.athlete_id == athlete_id).first()
@@ -190,3 +210,24 @@ class Database:
             logger.info(
                 f"Added name suggestion {name_suggestion.activity_id} to the database"
             )
+
+    def delete_activity(self, activity_id: int, athlete_id: int):
+        with self.Session() as session:
+            activity = (
+                session.query(Activity)
+                .filter(
+                    Activity.activity_id == activity_id,
+                    Activity.athlete_id == athlete_id,
+                )
+                .first()
+            )
+            if activity:
+                session.delete(activity)
+                session.commit()
+                logger.info(f"Deleted activity {activity_id}")
+
+    def add_prompt_response(self, prompt_response: PromptResponse):
+        with self.Session() as session:
+            session.add(prompt_response)
+            session.commit()
+            logger.info(f"Added prompt response {prompt_response.uuid} to the database")

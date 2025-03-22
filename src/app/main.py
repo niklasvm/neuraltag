@@ -7,23 +7,24 @@ from fastapi.templating import Jinja2Templates
 
 from src.app.pages import home
 
-from src.app.apis import auth, webhook
+from src.app.routes import login, webhook, authorization
 
 load_dotenv(override=True)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-AUTHORIZATION_CALLBACK = "/login"
-
-app = FastAPI(docs_url=None, redoc_url=None,openapi_url=None)  # Create FastAPI instance
+app = FastAPI(
+    docs_url=None, redoc_url=None, openapi_url=None
+)  # Create FastAPI instance
 
 templates = Jinja2Templates(directory="src/app/templates")  # Configure Jinja2
 
 # Include your route handlers
 app.include_router(home.router)
-app.include_router(auth.router)
+app.include_router(login.router)
 app.include_router(webhook.router)
+app.include_router(authorization.router)
 app.mount("/static", StaticFiles(directory="src/app/static"), name="static")
 
 
