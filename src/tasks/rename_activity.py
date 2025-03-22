@@ -135,4 +135,5 @@ def rename_workflow(activity: Activity, settings: Settings):
 
         # notify via pushbullet
         pb = Pushbullet(settings.pushbullet_api_key)
-        pb.push_note(title=top_name_suggestion, body=top_name_description)
+        pb_response = pb.push_note(title=top_name_suggestion, body=top_name_description)
+        logger.info(pb_response)
