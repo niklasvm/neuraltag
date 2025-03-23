@@ -1,3 +1,4 @@
+import hashlib
 import os
 from dotenv import load_dotenv
 from pydantic import BaseModel, field_validator
@@ -14,6 +15,7 @@ class Settings(BaseModel):
     gemini_api_key: str
     pushbullet_api_key: str
     encryption_key: bytes
+    state: str
 
     @field_validator("*")
     def not_empty(cls, value):
@@ -32,6 +34,7 @@ try:
         gemini_api_key=os.environ["GEMINI_API_KEY"],
         pushbullet_api_key=os.environ["PUSHBULLET_API_KEY"],
         encryption_key=os.environ["ENCRYPTION_KEY"].encode(),
+        state=hashlib.sha256(os.urandom(1024)).hexdigest(),
     )
 except ValueError as e:
     print(f"Configuration error: {e}")
