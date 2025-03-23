@@ -76,6 +76,7 @@ def rename_workflow(activity: Activity, settings: Settings):
         "map_centroid_lat",
         "map_centroid_lon",
         "map_area",
+        "suffer_score",
     ]
 
     activities_df = activities_df[activities_df["sport_type"] == activity.sport_type]
