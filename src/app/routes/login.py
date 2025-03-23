@@ -37,6 +37,9 @@ async def login(
             {"error": login_request.error},
         )
 
+    if login_request.state != settings.state:
+        raise HTTPException(status_code=400, detail="Invalid state parameter")
+
     try:
         strava_db_operations = ExternalAPIDataHandler.authenticate_and_store(
             code=login_request.code,

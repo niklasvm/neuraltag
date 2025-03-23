@@ -15,7 +15,6 @@ from src.app.config import Settings
 from src.database.adapter import Database
 from src.database.models import Activity, Auth, NameSuggestion, PromptResponse, User
 from src.tasks.data import summary_activity_to_activity_model
-import json
 from google import genai
 from src.tasks.strava import exchange_code_for_token
 
@@ -160,13 +159,6 @@ prompt = """
 {context_data}
 [END CONTEXT]
 
-[OUTPUT FORMAT]
-class Response(BaseModel):
-    name: str
-    description: str
-    probability: float
-[END OUTPUT FORMAT]
-
 Given the following input:
 {input}
 
@@ -201,10 +193,14 @@ def generate_activity_name_with_gemini(
         f.write(rendered_prompt)
 
     client = genai.Client(api_key=api_key)
+
+    config = {
+        "response_schema": list[NameResult],
+        "response_mime_type": "application/json",
+    }
     if temperature:
-        config = {"temperature": temperature}
-    else:
-        config = None
+        config["temperature"] = temperature
+
     response = client.models.generate_content(
         model="gemini-2.0-flash",
         contents=rendered_prompt,
@@ -218,12 +214,6 @@ def generate_activity_name_with_gemini(
     )
 
     # parse response
-    results = []
-    try:
-        formatted_results = "\n".join(response.text.strip().split("\n")[1:-1])
-        results = json.loads(formatted_results)
-        results = [NameResult(**result) for result in results]
-    except Exception:
-        pass
+    results = response.parsed
 
     return results, prompt_response
