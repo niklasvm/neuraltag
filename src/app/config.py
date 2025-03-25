@@ -16,6 +16,8 @@ class Settings(BaseModel):
     pushbullet_api_key: str
     encryption_key: bytes
     state: str
+    telegram_bot_token: str
+    telegram_chat_id: str
 
     @field_validator("*")
     def not_empty(cls, value):
@@ -35,6 +37,8 @@ try:
         pushbullet_api_key=os.environ["PUSHBULLET_API_KEY"],
         encryption_key=os.environ["ENCRYPTION_KEY"].encode(),
         state=hashlib.sha256(os.urandom(1024)).hexdigest(),
+        telegram_bot_token=os.environ["TELEGRAM_BOT_TOKEN"],
+        telegram_chat_id=os.environ["TELEGRAM_CHAT_ID"],
     )
 except ValueError as e:
     print(f"Configuration error: {e}")

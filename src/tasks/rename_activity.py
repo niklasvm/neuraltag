@@ -10,6 +10,7 @@ from src.app.config import Settings
 
 from src.database.models import Activity
 from src.tasks.external_api_data_handler import ExternalAPIDataHandler
+from src.tasks.telegram import TelegramBot
 
 NEURALTAG_SIGNATURE = "named with NeuralTag 🤖"
 
@@ -138,3 +139,12 @@ def rename_workflow(activity: Activity, settings: Settings):
         pb = Pushbullet(settings.pushbullet_api_key)
         pb_response = pb.push_note(title=top_name_suggestion, body=top_name_description)
         logger.info(pb_response)
+
+        tb = TelegramBot(
+            token=settings.telegram_bot_token,
+            chat_id=settings.telegram_chat_id,
+            parse_mode="HTML",
+        )
+        tb.send_message(
+            message=f"<b>Activity Renamed:</b> {top_name_suggestion}\n\n{top_name_description}"
+        )
