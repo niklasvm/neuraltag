@@ -113,6 +113,25 @@ resource "google_cloud_run_v2_service" "default" {
           }
         }
       }
+      env {
+        name = "TELEGRAM_BOT_TOKEN"
+        value_source {
+          secret_key_ref {
+            secret  = "TELEGRAM_BOT_TOKEN"
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "TELEGRAM_CHAT_ID"
+        value_source {
+          secret_key_ref {
+            secret  = "TELEGRAM_CHAT_ID"
+            version = "latest"
+          }
+        }
+      }
+
     }
     scaling {
       min_instance_count = 0
