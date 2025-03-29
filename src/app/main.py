@@ -9,14 +9,13 @@ from src.app.pages import home
 
 from src.app.routes import login, webhook, authorization
 
+
 load_dotenv(override=True)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(
-    docs_url=None, redoc_url=None, openapi_url=None
-)  # Create FastAPI instance
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 templates = Jinja2Templates(directory="src/app/templates")  # Configure Jinja2
 
@@ -38,5 +37,5 @@ async def welcome(request: Request):
 
 
 @app.get("/favicon.ico", include_in_schema=False)
-async def favicon():
+async def favicon() -> FileResponse:
     return FileResponse("src/app/static/images/favicon.ico")

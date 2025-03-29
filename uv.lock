@@ -484,6 +484,27 @@ standard = [
 ]
 
 [[package]]
+name = "fastapi-throttle"
+version = "0.1.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "fastapi" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2b/a2/8380bb2683899370b61674ce7d27f3c357cb9761d7d52f8857ebc9f26c5d/fastapi_throttle-0.1.4.tar.gz", hash = "sha256:96c51a87c805e8114cc0d54c3d25157ddab1cf6ed579a2dcce4ff3f56f7e1937", size = 4369 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a0/e8/1586614e3299b25040c2639e040a8e5181c2e0f07a60750f8920f38c1630/fastapi_throttle-0.1.4-py3-none-any.whl", hash = "sha256:932b69eb0bc453d5d56576d0af7e9236b05249ec5dccbbea7feaa9aa40a8e204", size = 5193 },
+]
+
+[[package]]
+name = "fastjsonschema"
+version = "2.21.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8b/50/4b769ce1ac4071a1ef6d86b1a3fb56cdc3a37615e8c5519e1af96cdac366/fastjsonschema-2.21.1.tar.gz", hash = "sha256:794d4f0a58f848961ba16af7b9c85a3e88cd360df008c59aac6fc5ae9323b5d4", size = 373939 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/90/2b/0817a2b257fe88725c25589d89aec060581aabf668707a8d03b2e9e0cb2a/fastjsonschema-2.21.1-py3-none-any.whl", hash = "sha256:c9e5b7e908310918cf494a434eeb31384dd84a98b57a30bcb1f535015b554667", size = 23924 },
+]
+
+[[package]]
 name = "filelock"
 version = "3.18.0"
 source = { registry = "https://pypi.org/simple" }
@@ -961,6 +982,21 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a7/17/7d35094da0820ae941d8ce51842f253da36c6f95360ea0afabfc18bc02c6/narwhals-1.29.1.tar.gz", hash = "sha256:c408acf09e90c116f247cf34f24a3a89d147e3e235b1d3c708cfd1960baf320a", size = 251464 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f1/22/380df533b08a57bc9013bb5714f33c571e1447828d83213a66adaefc0a04/narwhals-1.29.1-py3-none-any.whl", hash = "sha256:2f68cfbb2562672c4dfa54f158ed8c2828e9920ef784981cd9114e419c444216", size = 308220 },
+]
+
+[[package]]
+name = "nbformat"
+version = "5.10.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "fastjsonschema" },
+    { name = "jsonschema" },
+    { name = "jupyter-core" },
+    { name = "traitlets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6d/fd/91545e604bc3dad7dca9ed03284086039b294c6b3d75c0d2fa45f9e9caf3/nbformat-5.10.4.tar.gz", hash = "sha256:322168b14f937a5d11362988ecac2a4952d3d8e3a2cbeb2319584631226d5b3a", size = 142749 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a9/82/0340caa499416c78e5d8f5f05947ae4bc3cba53c9f038ab6e9ed964e22f1/nbformat-5.10.4-py3-none-any.whl", hash = "sha256:3b48d6c8fbca4b299bf3982ea7db1af21580e4fec269ad087b9e81588891200b", size = 78454 },
 ]
 
 [[package]]
@@ -1939,6 +1975,7 @@ dependencies = [
     { name = "cryptography" },
     { name = "dill" },
     { name = "fastapi", extra = ["standard"] },
+    { name = "fastapi-throttle" },
     { name = "folium" },
     { name = "google-genai" },
     { name = "jinja2" },
@@ -1962,6 +1999,7 @@ dev = [
     { name = "httpx" },
     { name = "ipykernel" },
     { name = "ipython" },
+    { name = "nbformat" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "ruff" },
@@ -1975,6 +2013,7 @@ requires-dist = [
     { name = "cryptography", specifier = ">=44.0.2" },
     { name = "dill", specifier = ">=0.3.9" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.115.8" },
+    { name = "fastapi-throttle", specifier = ">=0.1.4" },
     { name = "folium", specifier = ">=0.19.4" },
     { name = "google-genai", specifier = ">=1.2.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
@@ -1998,6 +2037,7 @@ dev = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "ipython", specifier = ">=8.18.1" },
+    { name = "nbformat", specifier = ">=5.10.4" },
     { name = "pre-commit", specifier = ">=4.2.0" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "ruff", specifier = ">=0.9.6" },
