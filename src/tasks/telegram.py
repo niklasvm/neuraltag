@@ -9,4 +9,4 @@ class TelegramBot:
 
     def send_message(self, message: str):
         url = f"https://api.telegram.org/bot{self.token}/sendMessage?chat_id={self.chat_id}&text={message}&parse_mode={self.parse_mode}"
-        requests.get(url)
+        return requests.get(url).json()

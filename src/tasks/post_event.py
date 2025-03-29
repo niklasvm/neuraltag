@@ -2,7 +2,7 @@ import logging
 
 from src.database.adapter import Database
 from src.app.schemas.webhook_post_request import WebhookPostRequest
-from src.tasks.external_api_data_handler import ExternalAPIDataHandler
+from src.tasks.etl import SingleActivityETL
 from src.tasks.rename_activity import rename_workflow  # Import your route modules
 from src.app.config import Settings
 
@@ -45,14 +45,11 @@ def handle_activity_create_or_update_event(content, settings):
     activity_id = content.object_id
     athlete_id = content.owner_id
 
-    strava_db_operations = ExternalAPIDataHandler.from_athlete_id(
-        athlete_id=athlete_id,
+    activity = SingleActivityETL(
         settings=settings,
-    )
-
-    activity = strava_db_operations.fetch_and_load_activity(
         activity_id=activity_id,
-    )
+        athlete_id=athlete_id,
+    ).run()
 
     if content.aspect_type == "create" or (
         content.aspect_type == "update"

@@ -20,19 +20,16 @@ from sqlalchemy import insert
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ACTIVITY_COLUMNS_TO_ENCRYPT = [
-#     "start_lat",
-#     "start_lng",
-#     "end_lat",
-#     "end_lng",
-#     "map_summary_polyline",
-#     "map_centroid_lat",
-#     "map_centroid_lon",
-#     "location_city",
-#     "location_state",
-#     "location_country",
-#     "name",
-# ]
+USER_ENCRYPTED_COLUMNS = [
+    "name",
+    "lastname",
+    "sex",
+    "city",
+    "profile",
+    "profile_medium",
+    "state",
+    "country",
+]
 
 
 def encrypt_token(token: str, key: bytes) -> str:
@@ -59,6 +56,13 @@ class Database:
         self.encryption_key = encryption_key
 
     def add_user(self, user: User):
+        for column in USER_ENCRYPTED_COLUMNS:
+            if hasattr(user, column):
+                value = getattr(user, column)
+                if value:
+                    encrypted_value = encrypt_token(value, self.encryption_key)
+                    setattr(user, column, encrypted_value)
+
         with self.Session() as session:
             existing_user = (
                 session.query(User).filter(User.athlete_id == user.athlete_id).first()
@@ -69,6 +73,20 @@ class Database:
                 logger.info(f"Added user {user.uuid} to the database")
 
                 return str(user.uuid)
+            else:
+                existing_user.updated_at = datetime.datetime.now()
+                existing_user.athlete_id = user.athlete_id
+                existing_user.auth_uuid = user.auth_uuid
+
+                model_columns = [
+                    x.name
+                    for x in existing_user.__table__.columns
+                    if x.name not in ["uuid", "created_at", "updated_at"]
+                ]
+                for column in model_columns:
+                    setattr(existing_user, column, getattr(user, column))
+
+                session.commit()
 
             logger.info(
                 f"User with id {existing_user.uuid} already exists in the database"
@@ -77,7 +95,15 @@ class Database:
 
     def get_user(self, uuid: str) -> User:
         with self.Session() as session:
-            return session.query(User).filter(User.uuid == uuid).first()
+            user = session.query(User).filter(User.uuid == uuid).first()
+
+        for column in USER_ENCRYPTED_COLUMNS:
+            if hasattr(user, column):
+                value = getattr(user, column)
+                if value:
+                    decrypted_value = decrypt_token(value, self.encryption_key)
+                    setattr(user, column, decrypted_value)
+        return user
 
     def add_auth(self, auth: Auth):
         # encrypt tokens
@@ -231,3 +257,14 @@ class Database:
             session.add(prompt_response)
             session.commit()
             logger.info(f"Added prompt response {prompt_response.uuid} to the database")
+
+    def get_name_suggestions_by_activity_id(
+        self, activity_id: int
+    ) -> list[NameSuggestion]:
+        with self.Session() as session:
+            name_suggestions = (
+                session.query(NameSuggestion)
+                .filter(NameSuggestion.activity_id == activity_id)
+                .all()
+            )
+            return name_suggestions

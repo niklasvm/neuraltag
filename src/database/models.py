@@ -38,8 +38,18 @@ class User(Base):
 
     uuid = Column(UUID, primary_key=True, nullable=False, default=uuid.uuid4)
     athlete_id = Column(Integer, unique=True)
+    name = Column(String)
+    lastname = Column(String)
+    sex = Column(String)
+
+    profile = Column(String)
+    profile_medium = Column(String)
+    city = Column(String)
+    state = Column(String)
+    country = Column(String)
+
     created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
-    updated_at = Column(DateTime)
+    updated_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
     auth_uuid = Column(UUID, ForeignKey("auth.uuid"))
     auth = relationship("Auth", back_populates="user")
     activity = relationship(
