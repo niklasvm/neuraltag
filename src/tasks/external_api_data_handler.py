@@ -164,8 +164,12 @@ Given the following input:
 
 [PROMPT]
 Provide {number_of_options} options for a name for the input activity that is consistent with the data. The names can have one or more emojis. For each name, explain in detail why it was chosen.
+Also provide a probability to describe confidence in the name. Order the final names from highest to lowest probability.
 Avoid using boring names like Afternoon Run, Evening Pilates or Morning Swim witin the name. Rather be creative and use names that are fun and engaging.
 """
+
+# MODEL="gemini-2.0-flash"
+MODEL = "gemini-2.5-pro-exp-03-25"
 
 
 def generate_activity_name_with_gemini(
@@ -202,7 +206,7 @@ def generate_activity_name_with_gemini(
         config["temperature"] = temperature
 
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model=MODEL,
         contents=rendered_prompt,
         config=config,
     )
