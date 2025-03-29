@@ -9,10 +9,8 @@ from dotenv import load_dotenv
 
 from src.app.routes.authorization import AUTHORIZATION_CALLBACK
 from src.app.schemas.login_request import LoginRequest
-from src.tasks.external_api_data_handler import (
-    ExternalAPIDataHandler,
-)
 from src.app.config import settings
+from src.tasks.etl import AuthETL, UserETL, ActivitiesETL
 
 load_dotenv(override=True)
 
@@ -41,24 +39,31 @@ async def login(
         raise HTTPException(status_code=400, detail="Invalid state parameter")
 
     try:
-        strava_db_operations = ExternalAPIDataHandler.authenticate_and_store(
+        auth_uuid = AuthETL(
             code=login_request.code,
             scope=login_request.scope,
             settings=settings,
-        )
+        ).run()
     except Exception:
         logger.exception("Error during login:")
         raise HTTPException(status_code=500, detail="Failed to log in user")
+
+    UserETL(
+        auth_uuid=auth_uuid,
+        settings=settings,
+    ).run()
 
     # fetch and load historic activities
     days = 365 * 1
     # days = 365 * 5
     before: datetime.datetime = datetime.datetime.now()
     after: datetime.datetime = before - datetime.timedelta(days=days)
-    background_tasks.add_task(
-        strava_db_operations.fetch_and_load_historic_activities,
-        before=before,
+    activities_etl = ActivitiesETL(
+        auth_uuid=auth_uuid,
+        settings=settings,
         after=after,
+        before=before,
     )
+    background_tasks.add_task(activities_etl.run)
 
     return RedirectResponse(url="/welcome")
