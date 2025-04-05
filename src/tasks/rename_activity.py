@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def rename_workflow(activity: Activity, settings: Settings):
+def rename_workflow(activity: Activity, settings: Settings, rename: bool):
     db = Database(
         settings.postgres_connection_string,
         encryption_key=settings.encryption_key,
@@ -28,30 +28,64 @@ def rename_workflow(activity: Activity, settings: Settings):
     time_start = datetime.datetime.now()
     existing_description = activity.description
 
-    days = 365
-    temperature = 2.0
+    if not rename:
+        days = 365
+        temperature = 2.0
+        etl = NameSuggestionETL(
+            llm_model="google-gla:gemini-2.5-pro-exp-03-25",
+            settings=settings,
+            activity_id=activity.activity_id,
+            days=days,
+            temperature=temperature,
+        )
+        name_suggestions = etl.run()
 
-    etl = NameSuggestionETL(
-        llm_model="google-gla:gemini-2.5-pro-exp-03-25",
-        settings=settings,
-        activity_id=activity.activity_id,
-        days=days,
-        temperature=temperature,
-    )
-    name_suggestions = etl.run()
+        # order to get the best name suggestion first
+        name_suggestions = sorted(
+            name_suggestions,
+            key=lambda x: x.probability,
+            reverse=True,
+        )
 
-    # name_suggestions = db.get_name_suggestions_by_activity_id(
-    #     activity_id=activity.activity_id,
-    # )
-    # order to get the best name suggestion first
-    name_suggestions = sorted(
-        name_suggestions,
-        key=lambda x: x.probability,
-        reverse=True,
-    )
+        idx = 0
+    else:
+        name_suggestions = db.get_name_suggestions_by_activity_id(
+            activity_id=activity.activity_id,
+        )
+        most_recent_name_suggestion = db.get_last_rename(
+            activity_id=activity.activity_id
+        )
 
-    top_name_suggestion = name_suggestions[0].name
-    top_name_description = name_suggestions[0].description
+        if len(name_suggestions) == 0 or most_recent_name_suggestion is None:
+            rename_workflow(
+                activity=activity,
+                settings=settings,
+                rename=False,
+            )
+            return
+
+        # order to get the best name suggestion first
+        name_suggestions = sorted(
+            name_suggestions,
+            key=lambda x: x.probability,
+            reverse=True,
+        )
+
+        # find the index of the most recent name suggestion
+        existing_index = [
+            name_suggestion.name for name_suggestion in name_suggestions
+        ].index(most_recent_name_suggestion.new_name)
+        idx = existing_index + 1
+        if idx >= len(name_suggestions):
+            idx = 0
+
+        logger.info(
+            f"Activity {activity.activity_id} already exists in the database. Updating the name suggestion index to {idx}."
+        )
+
+    top_name_suggestion = name_suggestions[idx].name
+    top_name_description = name_suggestions[idx].description
+    top_name_probability = name_suggestions[idx].probability
 
     time_end = datetime.datetime.now()
     duration_seconds = (time_end - time_start).total_seconds()
@@ -70,6 +104,7 @@ def rename_workflow(activity: Activity, settings: Settings):
         athlete_id=activity.athlete_id,
     )
 
+    # publish the new name to strava
     client = get_strava_client(
         access_token=auth.access_token,
         refresh_token=auth.refresh_token,
@@ -82,11 +117,19 @@ def rename_workflow(activity: Activity, settings: Settings):
         name=top_name_suggestion,
         description=new_description,
     )
+    db.add_rename_history(
+        activity_id=activity.activity_id,
+        new_name=top_name_suggestion,
+        old_name=activity.name,
+    )
 
     # notify via pushbullet
     pb = Pushbullet(settings.pushbullet_api_key)
-    pb_response = pb.push_note(title=top_name_suggestion, body=top_name_description)
-    logger.info(pb_response)
+    pb_response = pb.push_note(
+        title=top_name_suggestion,
+        body=top_name_description + f"\nProbability: {top_name_probability * 100:.0f}%",
+    )
+    pb_response
 
     tb = TelegramBot(
         token=settings.telegram_bot_token,
@@ -102,7 +145,7 @@ def rename_workflow(activity: Activity, settings: Settings):
         )
 
     telegram_message = telegram_message.strip()
-    response = tb.send_message(
+    telegram_response = tb.send_message(
         message=telegram_message,
     )
-    logger.info(response)
+    telegram_response

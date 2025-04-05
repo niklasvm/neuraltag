@@ -17,12 +17,8 @@ def process_post_request(content: WebhookPostRequest, settings: Settings):
 
     # handle activity creation and activity update events
     logger.info(f"Received webhook event: {content}")
-    if (content.aspect_type == "create" and content.object_type == "activity") or (
-        content.aspect_type == "update"
-        and content.object_type == "activity"
-        and content.updates is not None
-        and "title" in content.updates
-        and content.updates.get("title") == "Rename"
+    if content.object_type == "activity" and (
+        content.aspect_type == "create" or content.aspect_type == "update"
     ):
         handle_activity_create_or_update_event(content, settings)
 
@@ -51,13 +47,17 @@ def handle_activity_create_or_update_event(content, settings):
         athlete_id=athlete_id,
     ).run()
 
-    if content.aspect_type == "create" or (
+    if content.aspect_type == "create" and content.object_type == "activity":
+        rename_workflow(activity=activity, settings=settings, rename=False)
+
+    elif (
         content.aspect_type == "update"
+        and content.object_type == "activity"
         and content.updates is not None
         and "title" in content.updates
         and content.updates.get("title") == "Rename"
     ):
-        rename_workflow(activity=activity, settings=settings)
+        rename_workflow(activity=activity, settings=settings, rename=True)
 
 
 def handle_activity_delete_event(content, settings):

@@ -13,6 +13,7 @@ from src.database.models import (
     Base,
     NameSuggestion,
     PromptResponse,
+    RenameHistory,
     User,
 )
 from sqlalchemy import insert
@@ -258,13 +259,45 @@ class Database:
             session.commit()
             logger.info(f"Added prompt response {prompt_response.uuid} to the database")
 
+    def add_rename_history(self, old_name: str, new_name: str, activity_id: int):
+        rename_history = RenameHistory(
+            old_name=old_name,
+            new_name=new_name,
+            activity_id=activity_id,
+        )
+        with self.Session() as session:
+            session.add(rename_history)
+            session.commit()
+            logger.info(
+                f"Added rename history {rename_history.activity_id} to the database"
+            )
+
     def get_name_suggestions_by_activity_id(
         self, activity_id: int
     ) -> list[NameSuggestion]:
         with self.Session() as session:
-            name_suggestions = (
-                session.query(NameSuggestion)
-                .filter(NameSuggestion.activity_id == activity_id)
-                .all()
+            # get the latest prompt response for the activity and order by created_at at get the latest name suggestions
+            prompt_response = (
+                session.query(PromptResponse)
+                .filter(PromptResponse.activity_id == activity_id)
+                .order_by(PromptResponse.created_at.desc())
+                .first()
             )
+            if not prompt_response:
+                logger.info(f"No prompt response found for activity {activity_id}")
+                return []
+            name_suggestions = prompt_response.name_suggestions
             return name_suggestions
+
+    def get_last_rename(self, activity_id: int) -> None | RenameHistory:
+        with self.Session() as session:
+            rename_history = (
+                session.query(RenameHistory)
+                .filter(RenameHistory.activity_id == activity_id)
+                .order_by(RenameHistory.created_at.desc())
+                .first()
+            )
+            if not rename_history:
+                logger.info(f"No rename history found for activity {activity_id}")
+                return None
+            return rename_history
