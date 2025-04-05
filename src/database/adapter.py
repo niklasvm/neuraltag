@@ -288,3 +288,16 @@ class Database:
                 return []
             name_suggestions = prompt_response.name_suggestions
             return name_suggestions
+
+    def get_last_rename(self, activity_id: int) -> None | RenameHistory:
+        with self.Session() as session:
+            rename_history = (
+                session.query(RenameHistory)
+                .filter(RenameHistory.activity_id == activity_id)
+                .order_by(RenameHistory.created_at.desc())
+                .first()
+            )
+            if not rename_history:
+                logger.info(f"No rename history found for activity {activity_id}")
+                return None
+            return rename_history

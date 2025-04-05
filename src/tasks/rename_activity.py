@@ -39,11 +39,24 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
             temperature=temperature,
         )
         name_suggestions = etl.run()
+
+        # order to get the best name suggestion first
+        name_suggestions = sorted(
+            name_suggestions,
+            key=lambda x: x.probability,
+            reverse=True,
+        )
+
+        idx = 0
     else:
         name_suggestions = db.get_name_suggestions_by_activity_id(
             activity_id=activity.activity_id,
         )
-        if len(name_suggestions) == 0:
+        most_recent_name_suggestion = db.get_last_rename(
+            activity_id=activity.activity_id
+        )
+
+        if len(name_suggestions) == 0 or most_recent_name_suggestion is None:
             rename_workflow(
                 activity=activity,
                 settings=settings,
@@ -51,18 +64,17 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
             )
             return
 
-    # order to get the best name suggestion first
-    name_suggestions = sorted(
-        name_suggestions,
-        key=lambda x: x.probability,
-        reverse=True,
-    )
-    if not rename:
-        idx = 0
-    else:
+        # order to get the best name suggestion first
+        name_suggestions = sorted(
+            name_suggestions,
+            key=lambda x: x.probability,
+            reverse=True,
+        )
+
+        # find the index of the most recent name suggestion
         existing_index = [
             name_suggestion.name for name_suggestion in name_suggestions
-        ].index(activity.name)
+        ].index(most_recent_name_suggestion.new_name)
         idx = existing_index + 1
         if idx >= len(name_suggestions):
             idx = 0
@@ -115,9 +127,9 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
     pb = Pushbullet(settings.pushbullet_api_key)
     pb_response = pb.push_note(
         title=top_name_suggestion,
-        body=top_name_description + f"\nProbability: {top_name_probability:.2f}%",
+        body=top_name_description + f"\nProbability: {top_name_probability * 100:.0f}%",
     )
-    logger.info(pb_response)
+    pb_response
 
     tb = TelegramBot(
         token=settings.telegram_bot_token,
@@ -133,7 +145,7 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
         )
 
     telegram_message = telegram_message.strip()
-    response = tb.send_message(
+    telegram_response = tb.send_message(
         message=telegram_message,
     )
-    logger.info(response)
+    telegram_response
