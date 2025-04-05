@@ -43,6 +43,13 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
         name_suggestions = db.get_name_suggestions_by_activity_id(
             activity_id=activity.activity_id,
         )
+        if len(name_suggestions) == 0:
+            rename_workflow(
+                activity=activity,
+                settings=settings,
+                rename=False,
+            )
+            return
 
     # order to get the best name suggestion first
     name_suggestions = sorted(
