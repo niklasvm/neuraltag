@@ -283,5 +283,8 @@ class Database:
                 .order_by(PromptResponse.created_at.desc())
                 .first()
             )
+            if not prompt_response:
+                logger.info(f"No prompt response found for activity {activity_id}")
+                return []
             name_suggestions = prompt_response.name_suggestions
             return name_suggestions
