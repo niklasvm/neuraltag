@@ -5,7 +5,6 @@ interacting with external APIs and storing the data in the database.
 
 from __future__ import annotations
 import logging
-from pprint import pp
 from typing import Optional
 import pandas as pd
 from pydantic import BaseModel
@@ -138,9 +137,5 @@ def generate_activity_name_with_gemini(
     prompt_response, results = run_agent(
         activity_id, rendered_prompt, temperature, settings
     )
-
-    # pp(results_old)
-    # pp("-"* 20)
-    pp(results)
 
     return results, prompt_response
