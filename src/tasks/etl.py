@@ -263,7 +263,7 @@ class NameSuggestionETL(ETL):
                 name=name_result.name,
                 description=name_result.description,
                 probability=name_result.probability,
-                llm_model=self.llm_model,
+                prompt_response_id=prompt_response.uuid,
             )
             self.db.add_name_suggestion(name_suggestion)
             name_suggestions.append(name_suggestion)

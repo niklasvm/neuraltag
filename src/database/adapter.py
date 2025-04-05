@@ -13,6 +13,7 @@ from src.database.models import (
     Base,
     NameSuggestion,
     PromptResponse,
+    RenameHistory,
     User,
 )
 from sqlalchemy import insert
@@ -258,13 +259,29 @@ class Database:
             session.commit()
             logger.info(f"Added prompt response {prompt_response.uuid} to the database")
 
+    def add_rename_history(self, old_name: str, new_name: str, activity_id: int):
+        rename_history = RenameHistory(
+            old_name=old_name,
+            new_name=new_name,
+            activity_id=activity_id,
+        )
+        with self.Session() as session:
+            session.add(rename_history)
+            session.commit()
+            logger.info(
+                f"Added rename history {rename_history.activity_id} to the database"
+            )
+
     def get_name_suggestions_by_activity_id(
         self, activity_id: int
     ) -> list[NameSuggestion]:
         with self.Session() as session:
-            name_suggestions = (
-                session.query(NameSuggestion)
-                .filter(NameSuggestion.activity_id == activity_id)
-                .all()
+            # get the latest prompt response for the activity and order by created_at at get the latest name suggestions
+            prompt_response = (
+                session.query(PromptResponse)
+                .filter(PromptResponse.activity_id == activity_id)
+                .order_by(PromptResponse.created_at.desc())
+                .first()
             )
+            name_suggestions = prompt_response.name_suggestions
             return name_suggestions

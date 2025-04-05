@@ -70,6 +70,7 @@ def rename_workflow(activity: Activity, settings: Settings):
         athlete_id=activity.athlete_id,
     )
 
+    # publish the new name to strava
     client = get_strava_client(
         access_token=auth.access_token,
         refresh_token=auth.refresh_token,
@@ -81,6 +82,11 @@ def rename_workflow(activity: Activity, settings: Settings):
         activity_id=activity.activity_id,
         name=top_name_suggestion,
         description=new_description,
+    )
+    db.add_rename_history(
+        activity_id=activity.activity_id,
+        new_name=top_name_suggestion,
+        old_name=activity.name,
     )
 
     # notify via pushbullet

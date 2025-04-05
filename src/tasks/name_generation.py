@@ -72,6 +72,8 @@ def run_agent(
         activity_id=activity_id,
         prompt=rendered_prompt,
         response=str(result.data),
+        llm_model=llm_model,
+        temperature=temperature,
     )
 
     # parse response
