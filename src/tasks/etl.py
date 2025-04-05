@@ -238,8 +238,8 @@ class NameSuggestionETL(ETL):
             activity_id=self.activity_id,
             data=self._activities_df,
             number_of_options=self.number_of_options,
-            api_key=self.settings.gemini_api_key,
             temperature=self.temperature,
+            settings=self.settings,
         )
 
         self.db.add_prompt_response(prompt_response)
