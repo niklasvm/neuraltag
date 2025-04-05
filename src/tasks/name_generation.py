@@ -41,7 +41,7 @@ Avoid using boring names like Afternoon Run, Evening Pilates or Morning Swim wit
 
 
 def run_agent(
-    activity_id: int, rendered_prompt: str, temperature: float, settings: Settings
+    *, activity_id: int, rendered_prompt: str, temperature: float, llm_model: str
 ):
     # ollama_model = OpenAIModel(
     #     model_name='deepseek-r1:latest', provider=OpenAIProvider(base_url='http://localhost:11434/v1')
@@ -50,13 +50,13 @@ def run_agent(
         # "google-gla:gemini-1.5-pro",
         # "google-gla:gemini-2.0-flash-lite-preview-02-05",
         # "google-gla:gemini-2.5-pro-exp-03-25",
-        "google-gla:gemini-2.0-flash",
+        llm_model,
         # ollama_model,
         instrument=True,
         retries=1,
         result_type=list[NameResult],
         model_settings=ModelSettings(
-            temperature=2.0,
+            temperature=temperature,
         ),
     )
 
@@ -107,6 +107,7 @@ def run_genai(
 
 def generate_activity_name_with_gemini(
     activity_id: int,
+    llm_model: str,
     data: pd.DataFrame,
     number_of_options: int,
     temperature: float,
@@ -135,7 +136,10 @@ def generate_activity_name_with_gemini(
     #     activity_id, api_key, temperature, rendered_prompt
     # )
     prompt_response, results = run_agent(
-        activity_id, rendered_prompt, temperature, settings
+        activity_id=activity_id,
+        llm_model=llm_model,
+        rendered_prompt=rendered_prompt,
+        temperature=temperature,
     )
 
     return results, prompt_response

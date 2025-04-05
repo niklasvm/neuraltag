@@ -173,6 +173,7 @@ class ActivitiesETL(ETL):
 class NameSuggestionETL(ETL):
     def __init__(
         self,
+        llm_model: str,
         settings: Settings,
         activity_id: int,
         days: int,
@@ -180,6 +181,7 @@ class NameSuggestionETL(ETL):
         number_of_options: int = 10,
     ):
         super().__init__(settings=settings)
+        self.llm_model = llm_model
         self.activity_id = activity_id
         self.days = days
         self.temperature = temperature
@@ -236,6 +238,7 @@ class NameSuggestionETL(ETL):
     def load(self):
         name_results, prompt_response = generate_activity_name_with_gemini(
             activity_id=self.activity_id,
+            llm_model=self.llm_model,
             data=self._activities_df,
             number_of_options=self.number_of_options,
             temperature=self.temperature,
@@ -254,6 +257,7 @@ class NameSuggestionETL(ETL):
                 name=name_result.name,
                 description=name_result.description,
                 probability=name_result.probability,
+                llm_model=self.llm_model,
             )
             self.db.add_name_suggestion(name_suggestion)
             name_suggestions.append(name_suggestion)

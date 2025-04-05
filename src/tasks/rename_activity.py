@@ -32,6 +32,7 @@ def rename_workflow(activity: Activity, settings: Settings):
     temperature = 2.0
 
     etl = NameSuggestionETL(
+        llm_model="google-gla:gemini-2.5-pro-exp-03-25",
         settings=settings,
         activity_id=activity.activity_id,
         days=days,
@@ -41,6 +42,12 @@ def rename_workflow(activity: Activity, settings: Settings):
 
     name_suggestions = db.get_name_suggestions_by_activity_id(
         activity_id=activity.activity_id,
+    )
+    # order to get the best name suggestion first
+    name_suggestions = sorted(
+        name_suggestions,
+        key=lambda x: x.probability,
+        reverse=True,
     )
 
     top_name_suggestion = name_suggestions[0].name
