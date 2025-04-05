@@ -40,9 +40,9 @@ def rename_workflow(activity: Activity, settings: Settings):
     )
     name_suggestions = etl.run()
 
-    name_suggestions = db.get_name_suggestions_by_activity_id(
-        activity_id=activity.activity_id,
-    )
+    # name_suggestions = db.get_name_suggestions_by_activity_id(
+    #     activity_id=activity.activity_id,
+    # )
     # order to get the best name suggestion first
     name_suggestions = sorted(
         name_suggestions,
