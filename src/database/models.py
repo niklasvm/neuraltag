@@ -162,5 +162,6 @@ class NameSuggestion(Base):
     name = Column(String)
     description = Column(String)
     probability = Column(Float)
+    llm_model = Column(String)
     created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
     updated_at = Column(DateTime, nullable=False, default=datetime.datetime.now)

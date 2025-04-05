@@ -8,9 +8,13 @@ import logging
 from typing import Optional
 import pandas as pd
 from pydantic import BaseModel
+from src.app.config import Settings
 from src.database.models import PromptResponse
 from google import genai
-# from src.tasks.strava import exchange_code_for_token
+
+from pydantic_ai import Agent
+import logfire
+from pydantic_ai.settings import ModelSettings
 
 logger = logging.getLogger(__name__)
 
@@ -35,17 +39,86 @@ Also provide a probability to describe confidence in the name. Order the final n
 Avoid using boring names like Afternoon Run, Evening Pilates or Morning Swim within the name. Rather be creative and use names that are fun and engaging.
 """
 
-# MODEL="gemini-2.0-flash"
-MODEL = "gemini-2.5-pro-exp-03-25"
+
+def run_agent(
+    *, activity_id: int, rendered_prompt: str, temperature: float, llm_model: str
+):
+    # ollama_model = OpenAIModel(
+    #     model_name='deepseek-r1:latest', provider=OpenAIProvider(base_url='http://localhost:11434/v1')
+    # )
+    naming_agent = Agent(
+        # "google-gla:gemini-1.5-pro",
+        # "google-gla:gemini-2.0-flash-lite-preview-02-05",
+        # "google-gla:gemini-2.5-pro-exp-03-25",
+        # llm_model,
+        # "openai:gpt-4o",
+        # "google-vertex:gemini-2.0-flash"
+        # "openai:gpt-4o-mini"
+        # ollama_model,
+        llm_model,
+        instrument=True,
+        retries=1,
+        result_type=list[NameResult],
+        model_settings=ModelSettings(
+            temperature=temperature,
+        ),
+    )
+
+    result = naming_agent.run_sync(
+        rendered_prompt,
+    )
+
+    prompt_response = PromptResponse(
+        activity_id=activity_id,
+        prompt=rendered_prompt,
+        response=str(result.data),
+    )
+
+    # parse response
+    return prompt_response, result.data
+
+
+def run_genai(
+    activity_id: int, api_key: str, temperature: Optional[float], rendered_prompt: str
+):
+    client = genai.Client(api_key=api_key)
+
+    config = {
+        "response_schema": list[NameResult],
+        "response_mime_type": "application/json",
+    }
+    if temperature:
+        config["temperature"] = temperature
+
+    # MODEL="gemini-2.0-flash"
+    MODEL = "gemini-2.5-pro-exp-03-25"
+    response = client.models.generate_content(
+        model=MODEL,
+        contents=rendered_prompt,
+        config=config,
+    )
+
+    prompt_response = PromptResponse(
+        activity_id=activity_id,
+        prompt=rendered_prompt,
+        response=response.text,
+    )
+
+    # parse response
+    results = response.parsed
+    return prompt_response, results
 
 
 def generate_activity_name_with_gemini(
     activity_id: int,
+    llm_model: str,
     data: pd.DataFrame,
     number_of_options: int,
-    api_key: str,
-    temperature: Optional[float] = None,
+    temperature: float,
+    settings: Settings,
 ) -> tuple[list[NameResult], PromptResponse]:
+    logfire.configure(token=settings.logfire_token)
+
     input = data[data["id"] == activity_id].iloc[0]
     context_data = data.drop(data[data["id"] == activity_id].index)
 
@@ -63,28 +136,14 @@ def generate_activity_name_with_gemini(
     with open("prompt.txt", "w") as f:
         f.write(rendered_prompt)
 
-    client = genai.Client(api_key=api_key)
-
-    config = {
-        "response_schema": list[NameResult],
-        "response_mime_type": "application/json",
-    }
-    if temperature:
-        config["temperature"] = temperature
-
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=rendered_prompt,
-        config=config,
-    )
-
-    prompt_response = PromptResponse(
+    # prompt_response_old, results_old = run_genai(
+    #     activity_id, api_key, temperature, rendered_prompt
+    # )
+    prompt_response, results = run_agent(
         activity_id=activity_id,
-        prompt=rendered_prompt,
-        response=response.text,
+        llm_model=llm_model,
+        rendered_prompt=rendered_prompt,
+        temperature=temperature,
     )
-
-    # parse response
-    results = response.parsed
 
     return results, prompt_response

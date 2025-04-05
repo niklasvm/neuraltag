@@ -8,7 +8,7 @@ lint_tests:
 	ruff check src tests
 
 unit_tests:
-	coverage run -m --source src pytest --durations=0
+	coverage run -m --source src pytest --durations=0 ./tests
 	coverage report -m
 	coverage xml
 

@@ -9,6 +9,7 @@ Onboarding etl = athlete + historic activities
 
 from abc import ABC, abstractmethod
 import datetime
+from typing import Literal
 import uuid
 
 import pandas as pd
@@ -173,6 +174,12 @@ class ActivitiesETL(ETL):
 class NameSuggestionETL(ETL):
     def __init__(
         self,
+        llm_model: Literal[
+            # "openai:gpt-4o",
+            # "openai:gpt-4o-mini",
+            "google-gla:gemini-2.5-pro-exp-03-25",
+            "google-gla:gemini-2.0-flash",
+        ],
         settings: Settings,
         activity_id: int,
         days: int,
@@ -180,6 +187,7 @@ class NameSuggestionETL(ETL):
         number_of_options: int = 10,
     ):
         super().__init__(settings=settings)
+        self.llm_model = llm_model
         self.activity_id = activity_id
         self.days = days
         self.temperature = temperature
@@ -236,10 +244,11 @@ class NameSuggestionETL(ETL):
     def load(self):
         name_results, prompt_response = generate_activity_name_with_gemini(
             activity_id=self.activity_id,
+            llm_model=self.llm_model,
             data=self._activities_df,
             number_of_options=self.number_of_options,
-            api_key=self.settings.gemini_api_key,
             temperature=self.temperature,
+            settings=self.settings,
         )
 
         self.db.add_prompt_response(prompt_response)
@@ -254,6 +263,7 @@ class NameSuggestionETL(ETL):
                 name=name_result.name,
                 description=name_result.description,
                 probability=name_result.probability,
+                llm_model=self.llm_model,
             )
             self.db.add_name_suggestion(name_suggestion)
             name_suggestions.append(name_suggestion)

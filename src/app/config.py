@@ -18,6 +18,7 @@ class Settings(BaseModel):
     state: str
     telegram_bot_token: str
     telegram_chat_id: str
+    logfire_token: str
 
     @field_validator("*")
     def not_empty(cls, value):
@@ -39,6 +40,7 @@ try:
         state=hashlib.sha256(os.urandom(1024)).hexdigest(),
         telegram_bot_token=os.environ["TELEGRAM_BOT_TOKEN"],
         telegram_chat_id=os.environ["TELEGRAM_CHAT_ID"],
+        logfire_token=os.environ["LOGFIRE_TOKEN"],
     )
 except ValueError as e:
     print(f"Configuration error: {e}")

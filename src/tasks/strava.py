@@ -1,8 +1,7 @@
 """Module for interacting with the Strava API."""
 
 from stravalib import Client
-import datetime
-from stravalib.model import DetailedActivity, SummaryActivity
+
 
 def get_strava_client(
     access_token: str,
@@ -24,5 +23,3 @@ def get_strava_client(
     )
 
     return client
-
-
