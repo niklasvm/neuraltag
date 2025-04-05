@@ -150,8 +150,14 @@ class PromptResponse(Base):
     activity = relationship(Activity.__name__)
     prompt = Column(String)
     response = Column(String)
+    llm_model = Column(String)
+    temperature = Column(Float)
     created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
     updated_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
+
+    name_suggestions = relationship(
+        "NameSuggestion", back_populates="prompt_response", cascade="all, delete-orphan"
+    )
 
 
 class NameSuggestion(Base):
@@ -162,6 +168,23 @@ class NameSuggestion(Base):
     name = Column(String)
     description = Column(String)
     probability = Column(Float)
-    llm_model = Column(String)
+    prompt_response_id = Column(UUID, ForeignKey("prompt_response.uuid"), nullable=True)
+
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
+    updated_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
+
+    prompt_response = relationship("PromptResponse", back_populates="name_suggestions")
+
+    def __repr__(self):
+        return f"NameSuggestion(name={self.name}, description={self.description}, probability={self.probability}, created_at={self.created_at}, updated_at={self.updated_at})"
+
+
+class RenameHistory(Base):
+    __tablename__ = "rename_history"
+    uuid = Column(UUID, primary_key=True, nullable=False, default=uuid.uuid4)
+    activity_id = Column(BigInteger, ForeignKey("activity.activity_id"))
+    activity = relationship(Activity.__name__)
+    old_name = Column(String)
+    new_name = Column(String)
     created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
     updated_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
