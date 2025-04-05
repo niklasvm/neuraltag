@@ -50,8 +50,12 @@ def run_agent(
         # "google-gla:gemini-1.5-pro",
         # "google-gla:gemini-2.0-flash-lite-preview-02-05",
         # "google-gla:gemini-2.5-pro-exp-03-25",
-        llm_model,
+        # llm_model,
+        # "openai:gpt-4o",
+        # "google-vertex:gemini-2.0-flash"
+        # "openai:gpt-4o-mini"
         # ollama_model,
+        llm_model,
         instrument=True,
         retries=1,
         result_type=list[NameResult],

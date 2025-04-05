@@ -9,6 +9,7 @@ Onboarding etl = athlete + historic activities
 
 from abc import ABC, abstractmethod
 import datetime
+from typing import Literal
 import uuid
 
 import pandas as pd
@@ -173,7 +174,12 @@ class ActivitiesETL(ETL):
 class NameSuggestionETL(ETL):
     def __init__(
         self,
-        llm_model: str,
+        llm_model: Literal[
+            "openai:gpt-4o",
+            "openai:gpt-4o-mini",
+            "google-gla:gemini-2.5-pro-exp-03-25",
+            "google-vertex:gemini-2.0-flash",
+        ],
         settings: Settings,
         activity_id: int,
         days: int,
