@@ -29,7 +29,7 @@ def rename_workflow(activity: Activity, settings: Settings):
     existing_description = activity.description
 
     days = 365
-    temperature = 2
+    temperature = 2.0
 
     etl = NameSuggestionETL(
         settings=settings,

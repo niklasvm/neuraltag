@@ -50,7 +50,8 @@ def run_agent(
     naming_agent = Agent(
         # "google-gla:gemini-1.5-pro",
         # "google-gla:gemini-2.0-flash-lite-preview-02-05",
-        "google-gla:gemini-2.5-pro-exp-03-25",
+        # "google-gla:gemini-2.5-pro-exp-03-25",
+        "google-gla:gemini-2.0-flash",
         # ollama_model,
         instrument=True,
         retries=1,
