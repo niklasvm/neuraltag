@@ -175,10 +175,10 @@ class NameSuggestionETL(ETL):
     def __init__(
         self,
         llm_model: Literal[
-            "openai:gpt-4o",
-            "openai:gpt-4o-mini",
+            # "openai:gpt-4o",
+            # "openai:gpt-4o-mini",
             "google-gla:gemini-2.5-pro-exp-03-25",
-            "google-vertex:gemini-2.0-flash",
+            "google-gla:gemini-2.0-flash",
         ],
         settings: Settings,
         activity_id: int,
