@@ -178,6 +178,12 @@ class NameSuggestion(Base):
     def __repr__(self):
         return f"NameSuggestion(name={self.name}, description={self.description}, probability={self.probability}, created_at={self.created_at}, updated_at={self.updated_at})"
 
+    def dict(self):
+        d = {}
+        for column in self.__table__.columns:
+            d[column.name] = getattr(self, column.name)
+        return d
+
 
 class RenameHistory(Base):
     __tablename__ = "rename_history"

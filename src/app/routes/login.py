@@ -54,7 +54,7 @@ async def login(
     ).run()
 
     # fetch and load historic activities
-    days = 365 * 1
+    days = 365 * 3
     # days = 365 * 5
     before: datetime.datetime = datetime.datetime.now()
     after: datetime.datetime = before - datetime.timedelta(days=days)
