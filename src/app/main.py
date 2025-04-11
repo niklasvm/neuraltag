@@ -6,16 +6,20 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from src.app.pages import home
+import logfire
+
 
 from src.app.routes import login, webhook, authorization
 
 
 load_dotenv(override=True)
+logfire.configure()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+logfire.instrument_fastapi(app)  # Instrument FastAPI with logfire
 
 templates = Jinja2Templates(directory="src/app/templates")  # Configure Jinja2
 
