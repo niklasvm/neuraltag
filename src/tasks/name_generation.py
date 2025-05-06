@@ -12,12 +12,12 @@ from src.app.config import Settings
 from src.database.models import PromptResponse
 from google import genai
 
+from pydantic_ai.models.fallback import FallbackModel
 from pydantic_ai import Agent
 import logfire
 from pydantic_ai.settings import ModelSettings
 
 logger = logging.getLogger(__name__)
-from pydantic_ai.models.fallback import FallbackModel
 
 
 class NameResult(BaseModel):

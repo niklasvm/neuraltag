@@ -10,7 +10,9 @@ from dotenv import load_dotenv
 from src.app.routes.authorization import AUTHORIZATION_CALLBACK
 from src.app.schemas.login_request import LoginRequest
 from src.app.config import settings
+from src.database.models import User
 from src.tasks.etl import AuthETL, UserETL, ActivitiesETL
+from src.tasks.telegram import TelegramBot
 
 load_dotenv(override=True)
 
@@ -48,7 +50,7 @@ async def login(
         logger.exception("Error during login:")
         raise HTTPException(status_code=500, detail="Failed to log in user")
 
-    UserETL(
+    user: User = UserETL(
         auth_uuid=auth_uuid,
         settings=settings,
     ).run()
@@ -65,5 +67,14 @@ async def login(
         before=before,
     )
     background_tasks.add_task(activities_etl.run)
+
+    tb = TelegramBot(
+        token=settings.telegram_bot_token,
+        chat_id=settings.telegram_chat_id,
+        parse_mode="HTML",
+    )
+    tb.send_message(
+        text=f"New user: {user.name} {user.lastname} ({user.athlete_id})\n",
+    )
 
     return RedirectResponse(url="/welcome")
