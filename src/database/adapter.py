@@ -106,6 +106,20 @@ class Database:
                     setattr(user, column, decrypted_value)
         return user
 
+    def get_user_by_auth_id(self, auth_id: str) -> User:
+        with self.Session() as session:
+            user = session.query(User).filter(User.auth_uuid == auth_id).first()
+            if not user:
+                logger.info(f"User with auth id {auth_id} not found")
+                return None
+            for column in USER_ENCRYPTED_COLUMNS:
+                if hasattr(user, column):
+                    value = getattr(user, column)
+                    if value:
+                        decrypted_value = decrypt_token(value, self.encryption_key)
+                        setattr(user, column, decrypted_value)
+            return user
+
     def add_auth(self, auth: Auth):
         # encrypt tokens
         auth.access_token = encrypt_token(auth.access_token, self.encryption_key)
