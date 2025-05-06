@@ -70,7 +70,10 @@ async def login(
     )
     background_tasks.add_task(activities_etl.run)
 
-    send_new_user_message(auth_uuid=auth_uuid)
+    try:
+        send_new_user_message(auth_uuid=auth_uuid)
+    except Exception:
+        logger.exception("Error sending new user message to Telegram:")
 
     return RedirectResponse(url="/welcome")
 

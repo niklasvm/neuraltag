@@ -16,7 +16,7 @@ load_dotenv(override=True)
 logfire.configure()
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 logfire.instrument_fastapi(app)  # Instrument FastAPI with logfire
