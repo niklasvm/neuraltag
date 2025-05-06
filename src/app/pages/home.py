@@ -21,8 +21,8 @@ templates = Jinja2Templates(directory="src/app/templates")
     ],
 )
 async def home(request: Request):
-    if request.query_params:
-        raise HTTPException(
-            status_code=400, detail="Query parameters are not supported."
-        )
+    # if request.query_params:
+    #     raise HTTPException(
+    #         status_code=400, detail="Query parameters are not supported."
+    #     )
     return templates.TemplateResponse(request, "index.html", {"title": "Home Page"})
