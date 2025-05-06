@@ -12,6 +12,10 @@ from src.app.schemas.login_request import LoginRequest
 from src.app.config import settings
 from src.tasks.etl import AuthETL, UserETL, ActivitiesETL
 
+from src.database.adapter import Database
+from src.tasks.telegram import TelegramBot
+
+
 load_dotenv(override=True)
 
 logger = logging.getLogger(__name__)
@@ -54,7 +58,7 @@ async def login(
     ).run()
 
     # fetch and load historic activities
-    days = 365 * 1
+    days = 365 * 3
     # days = 365 * 5
     before: datetime.datetime = datetime.datetime.now()
     after: datetime.datetime = before - datetime.timedelta(days=days)
@@ -66,4 +70,26 @@ async def login(
     )
     background_tasks.add_task(activities_etl.run)
 
+    try:
+        send_new_user_message(auth_uuid=auth_uuid)
+    except Exception:
+        logger.exception("Error sending new user message to Telegram:")
+
     return RedirectResponse(url="/welcome")
+
+
+def send_new_user_message(auth_uuid: str):
+    db = Database(
+        connection_string=settings.postgres_connection_string,
+        encryption_key=settings.encryption_key,
+    )
+    user = db.get_user_by_auth_id(auth_uuid)
+
+    tb = TelegramBot(
+        token=settings.telegram_bot_token,
+        chat_id=settings.telegram_chat_id,
+        parse_mode="HTML",
+    )
+    tb.send_message(
+        message=f"New user: {user.name} {user.lastname} ({user.athlete_id})\n",
+    )

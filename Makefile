@@ -33,3 +33,14 @@ deploy:
 	uv run python cicd/deploy/modify_pyproject_toml.py
 	bash ./cicd/deploy/deploy.sh
 	git checkout pyproject.toml
+
+on:
+	sudo systemctl start strava.service
+	sudo systemctl start nginx
+
+off:
+	sudo systemctl stop strava.service
+	sudo systemctl stop nginx
+
+logs:
+	journalctl -u strava.service -f -n 300

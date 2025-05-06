@@ -92,20 +92,21 @@ class UserETL(ETL):
         self._athlete = client.get_athlete()
 
     def load(self):
-        self.db.add_user(
-            User(
-                athlete_id=self._athlete.id,
-                auth_uuid=self.auth_uuid,
-                name=self._athlete.firstname,
-                lastname=self._athlete.lastname,
-                sex=self._athlete.sex,
-                profile=self._athlete.profile,
-                profile_medium=self._athlete.profile_medium,
-                city=self._athlete.city,
-                state=self._athlete.state,
-                country=self._athlete.country,
-            )
+        user = User(
+            athlete_id=self._athlete.id,
+            auth_uuid=self.auth_uuid,
+            name=self._athlete.firstname,
+            lastname=self._athlete.lastname,
+            sex=self._athlete.sex,
+            profile=self._athlete.profile,
+            profile_medium=self._athlete.profile_medium,
+            city=self._athlete.city,
+            state=self._athlete.state,
+            country=self._athlete.country,
         )
+
+        self.db.add_user(user)
+        return user
 
 
 class SingleActivityETL(ETL):
