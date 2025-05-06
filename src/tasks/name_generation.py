@@ -17,6 +17,7 @@ import logfire
 from pydantic_ai.settings import ModelSettings
 
 logger = logging.getLogger(__name__)
+from pydantic_ai.models.fallback import FallbackModel
 
 
 class NameResult(BaseModel):
@@ -46,6 +47,12 @@ def run_agent(
     # ollama_model = OpenAIModel(
     #     model_name='deepseek-r1:latest', provider=OpenAIProvider(base_url='http://localhost:11434/v1')
     # )
+    fallback_nodel = FallbackModel(
+        llm_model,
+        "google-gla:gemini-2.0-flash",
+        "google-gla:gemini-1.5-pro",
+        "google-gla:gemini-1.5-flash",
+    )
     naming_agent = Agent(
         # "google-gla:gemini-1.5-pro",
         # "google-gla:gemini-2.0-flash-lite-preview-02-05",
@@ -55,7 +62,7 @@ def run_agent(
         # "google-vertex:gemini-2.0-flash"
         # "openai:gpt-4o-mini"
         # ollama_model,
-        llm_model,
+        fallback_nodel,
         instrument=True,
         retries=1,
         result_type=list[NameResult],
