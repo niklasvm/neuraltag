@@ -74,7 +74,7 @@ async def login(
         parse_mode="HTML",
     )
     tb.send_message(
-        text=f"New user: {user.name} {user.lastname} ({user.athlete_id})\n",
+        message=f"New user: {user.name} {user.lastname} ({user.athlete_id})\n",
     )
 
     return RedirectResponse(url="/welcome")
