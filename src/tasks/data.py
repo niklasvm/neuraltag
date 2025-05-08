@@ -75,16 +75,23 @@ def summary_activity_to_activity_model(summary_activity: SummaryActivity) -> Act
         activity_dict["pace_min_per_km"] = None
 
     decoded = polyline.decode(activity_dict["map"]["summary_polyline"])
-    if len(decoded) > 0:
-        poly = Polygon(decoded)
-        centroid = poly.centroid
-        centroid_lat = centroid.x
-        centroid_lon = centroid.y
-        area = poly.area
 
-        activity_dict["map_centroid_lat"] = centroid_lat
-        activity_dict["map_centroid_lon"] = centroid_lon
-        activity_dict["map_area"] = area
+    if len(decoded) > 0:
+        try:
+            poly = Polygon(decoded)
+            centroid = poly.centroid
+            centroid_lat = centroid.x
+            centroid_lon = centroid.y
+            area = poly.area
+
+            activity_dict["map_centroid_lat"] = centroid_lat
+            activity_dict["map_centroid_lon"] = centroid_lon
+            activity_dict["map_area"] = area
+        except Exception as e:
+            print(f"Error processing polyline: {e}")
+            activity_dict["map_centroid_lat"] = None
+            activity_dict["map_centroid_lon"] = None
+            activity_dict["map_area"] = None
 
     activity_dict["map_summary_polyline"] = activity_dict["map"]["summary_polyline"]
 
