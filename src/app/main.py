@@ -23,6 +23,11 @@ console_handler.setFormatter(formatter)
 root_logger.addHandler(console_handler)
 # root_logger.addHandler(logfire.LogfireLoggingHandler())
 
+# suppress logging from stravalib and httpx
+logging.getLogger("stravalib").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
+
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 # logfire.instrument_fastapi(app)  # Instrument FastAPI with logfire

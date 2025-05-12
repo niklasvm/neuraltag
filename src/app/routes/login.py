@@ -58,26 +58,41 @@ async def login(
     ).run()
 
     # fetch and load historic activities
-    days = 365 * 3
-    # days = 365 * 5
-    before: datetime.datetime = datetime.datetime.now()
-    after: datetime.datetime = before - datetime.timedelta(days=days)
-    activities_etl = ActivitiesETL(
-        auth_uuid=auth_uuid,
-        settings=settings,
-        after=after,
-        before=before,
-    )
-    background_tasks.add_task(activities_etl.run)
-
-    try:
-        send_new_user_message(auth_uuid=auth_uuid)
-    except Exception:
-        logger.exception(
-            f"Error new user message to telegram bot | auth_uuid: {auth_uuid}"
-        )
+    background_tasks.add_task(run_historic_activity_etl, auth_uuid=auth_uuid)
 
     return RedirectResponse(url="/welcome")
+
+
+def run_historic_activity_etl(auth_uuid):
+    try:
+        days = 365 * 3
+        # days = 365 * 5
+        before: datetime.datetime = datetime.datetime.now()
+        after: datetime.datetime = before - datetime.timedelta(days=days)
+        activities_etl = ActivitiesETL(
+            auth_uuid=auth_uuid,
+            settings=settings,
+            after=after,
+            before=before,
+        )
+        activities_etl.run()
+
+        try:
+            send_new_user_message(auth_uuid=auth_uuid)
+        except Exception:
+            logger.exception(
+                f"Error new user message to telegram bot | auth_uuid: {auth_uuid}"
+            )
+
+    except:
+        logger.exception(f"Error during historic activity ETL | auth_uuid: {auth_uuid}")
+        # reraise
+        raise
+
+    logger.info(
+        f"Historic activity ETL completed | auth_uuid: {auth_uuid} | days: {days}"
+    )
+    logger.info(f"User {auth_uuid} has been onboarded successfully")
 
 
 def send_new_user_message(auth_uuid: str):

@@ -247,9 +247,6 @@ class Database:
         with self.Session() as session:
             session.add(name_suggestion)
             session.commit()
-            logger.info(
-                f"Added name suggestion {name_suggestion.activity_id} to the database"
-            )
 
     def delete_activity(self, activity_id: int, athlete_id: int):
         with self.Session() as session:
@@ -270,7 +267,6 @@ class Database:
         with self.Session() as session:
             session.add(prompt_response)
             session.commit()
-            logger.info(f"Added prompt response {prompt_response.uuid} to the database")
 
     def add_rename_history(self, old_name: str, new_name: str, activity_id: int):
         rename_history = RenameHistory(
@@ -281,9 +277,6 @@ class Database:
         with self.Session() as session:
             session.add(rename_history)
             session.commit()
-            logger.info(
-                f"Added rename history {rename_history.activity_id} to the database"
-            )
 
     def get_name_suggestions_by_activity_id(
         self, activity_id: int
