@@ -26,6 +26,9 @@ root_logger.addHandler(console_handler)
 # suppress logging from stravalib and httpx
 logging.getLogger("stravalib").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("stravalib.util.limiter.SleepingRateLimitRule").setLevel(
+    logging.ERROR
+)
 
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
