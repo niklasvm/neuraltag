@@ -64,6 +64,7 @@ async def login(
 
 
 def run_historic_activity_etl(auth_uuid):
+    logger.info(f"Starting historic activity ETL | auth_uuid: {auth_uuid}")
     try:
         days = 365 * 3
         # days = 365 * 5

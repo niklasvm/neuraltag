@@ -152,3 +152,5 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
         )
     except Exception as e:
         logger.error(f"Failed to send telegram message: {e}")
+
+    logger.info("Renaming workflow completed")
