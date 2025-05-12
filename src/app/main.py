@@ -33,7 +33,7 @@ logging.getLogger("stravalib.util.limiter.SleepingRateLimitRule").setLevel(
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
-# logfire.instrument_fastapi(app)  # Instrument FastAPI with logfire
+logfire.instrument_fastapi(app)  # Instrument FastAPI with logfire
 
 templates = Jinja2Templates(directory="src/app/templates")  # Configure Jinja2
 
