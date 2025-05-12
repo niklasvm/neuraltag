@@ -18,7 +18,6 @@ from src.database.models import (
 )
 from sqlalchemy import insert
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 USER_ENCRYPTED_COLUMNS = [

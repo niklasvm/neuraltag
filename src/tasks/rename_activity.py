@@ -15,7 +15,6 @@ from src.tasks.telegram import TelegramBot
 NEURALTAG_SIGNATURE = "named with NeuralTag 🤖"
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

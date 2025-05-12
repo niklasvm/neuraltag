@@ -6,7 +6,7 @@ from src.tasks.etl import SingleActivityETL
 from src.tasks.rename_activity import rename_workflow  # Import your route modules
 from src.app.config import Settings
 
-logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 

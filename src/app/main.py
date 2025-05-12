@@ -15,11 +15,17 @@ from src.app.routes import login, webhook, authorization
 load_dotenv(override=True)
 logfire.configure()
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger()
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+root_logger.addHandler(console_handler)
+# root_logger.addHandler(logfire.LogfireLoggingHandler())
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
-logfire.instrument_fastapi(app)  # Instrument FastAPI with logfire
+
+# logfire.instrument_fastapi(app)  # Instrument FastAPI with logfire
 
 templates = Jinja2Templates(directory="src/app/templates")  # Configure Jinja2
 
