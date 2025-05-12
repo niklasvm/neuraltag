@@ -30,8 +30,8 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
         days = 365
         temperature = 2.0
         etl = NameSuggestionETL(
-            # llm_model="google-gla:gemini-2.5-pro-exp-03-25",
-            llm_model="google-gla:gemini-2.0-flash",
+            llm_model="google-gla:gemini-2.5-pro-exp-03-25",
+            # llm_model="google-gla:gemini-2.0-flash",
             settings=settings,
             activity_id=activity.activity_id,
             days=days,
