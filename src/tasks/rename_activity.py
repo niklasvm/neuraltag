@@ -1,4 +1,3 @@
-import datetime
 import logging
 
 from pushbullet import Pushbullet
@@ -15,7 +14,6 @@ from src.tasks.telegram import TelegramBot
 NEURALTAG_SIGNATURE = "named with NeuralTag 🤖"
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -25,7 +23,7 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
         encryption_key=settings.encryption_key,
     )
 
-    time_start = datetime.datetime.now()
+    # time_start = datetime.datetime.now()
     existing_description = activity.description
 
     if not rename:
@@ -33,6 +31,7 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
         temperature = 2.0
         etl = NameSuggestionETL(
             llm_model="google-gla:gemini-2.5-pro-exp-03-25",
+            # llm_model="google-gla:gemini-2.0-flash",
             settings=settings,
             activity_id=activity.activity_id,
             days=days,
@@ -87,9 +86,8 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
     top_name_description = name_suggestions[idx].description
     top_name_probability = name_suggestions[idx].probability
 
-    time_end = datetime.datetime.now()
-    duration_seconds = (time_end - time_start).total_seconds()
-    logger.info(f"Duration: {duration_seconds} seconds")
+    # time_end = datetime.datetime.now()
+    # duration_seconds = (time_end - time_start).total_seconds()
 
     if existing_description is None:
         existing_description = ""
@@ -98,7 +96,6 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
         new_description = f"{existing_description}\n\n{NEURALTAG_SIGNATURE}".strip()
     else:
         new_description = existing_description
-    logger.info(f"New description: {new_description}")
 
     auth = db.get_auth_by_athlete_id(
         athlete_id=activity.athlete_id,
@@ -117,6 +114,9 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
         name=top_name_suggestion,
         description=new_description,
     )
+    logger.info(
+        f"Updated activity {activity.activity_id} for athlete {activity.athlete_id} with new name `{top_name_suggestion}` and description `{new_description}`"
+    )
     db.add_rename_history(
         activity_id=activity.activity_id,
         new_name=top_name_suggestion,
@@ -124,12 +124,12 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
     )
 
     # notify via pushbullet
+    logger.info("Publishing notification to Pushbullet")
     pb = Pushbullet(settings.pushbullet_api_key)
-    pb_response = pb.push_note(
+    pb.push_note(
         title=top_name_suggestion,
         body=top_name_description + f"\nProbability: {top_name_probability * 100:.0f}%",
     )
-    pb_response
 
     tb = TelegramBot(
         token=settings.telegram_bot_token,
@@ -145,7 +145,12 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
         )
 
     telegram_message = telegram_message.strip()
-    telegram_response = tb.send_message(
-        message=telegram_message,
-    )
-    telegram_response
+    logger.info("Publishing notification to Telegram")
+    try:
+        tb.send_message(
+            message=telegram_message,
+        )
+    except Exception as e:
+        logger.error(f"Failed to send telegram message: {e}")
+
+    logger.info("Renaming workflow completed")

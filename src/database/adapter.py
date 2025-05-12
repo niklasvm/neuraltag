@@ -18,7 +18,6 @@ from src.database.models import (
 )
 from sqlalchemy import insert
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 USER_ENCRYPTED_COLUMNS = [
@@ -248,9 +247,9 @@ class Database:
         with self.Session() as session:
             session.add(name_suggestion)
             session.commit()
-            logger.info(
-                f"Added name suggestion {name_suggestion.activity_id} to the database"
-            )
+            session.refresh(
+                name_suggestion
+            )  # Refresh to keep it attached and up-to-date
 
     def delete_activity(self, activity_id: int, athlete_id: int):
         with self.Session() as session:
@@ -271,7 +270,9 @@ class Database:
         with self.Session() as session:
             session.add(prompt_response)
             session.commit()
-            logger.info(f"Added prompt response {prompt_response.uuid} to the database")
+            session.refresh(
+                prompt_response
+            )  # Refresh to keep it attached and up-to-date
 
     def add_rename_history(self, old_name: str, new_name: str, activity_id: int):
         rename_history = RenameHistory(
@@ -282,9 +283,6 @@ class Database:
         with self.Session() as session:
             session.add(rename_history)
             session.commit()
-            logger.info(
-                f"Added rename history {rename_history.activity_id} to the database"
-            )
 
     def get_name_suggestions_by_activity_id(
         self, activity_id: int

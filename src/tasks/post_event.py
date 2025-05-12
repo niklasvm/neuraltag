@@ -6,7 +6,7 @@ from src.tasks.etl import SingleActivityETL
 from src.tasks.rename_activity import rename_workflow  # Import your route modules
 from src.app.config import Settings
 
-logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,6 +46,7 @@ def handle_activity_create_or_update_event(content, settings):
         activity_id=activity_id,
         athlete_id=athlete_id,
     ).run()
+    logger.info(f"Successfully loaded activity {activity_id} for athlete {athlete_id}")
 
     if content.aspect_type == "create" and content.object_type == "activity":
         rename_workflow(activity=activity, settings=settings, rename=False)

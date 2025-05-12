@@ -21,6 +21,7 @@ async def authorization() -> RedirectResponse:
 
     client = Client()
 
+    logger.info("Redirecting to Strava authorization URL")
     redirect_uri = settings.application_url + AUTHORIZATION_CALLBACK
     url = client.authorization_url(
         client_id=settings.strava_client_id,
