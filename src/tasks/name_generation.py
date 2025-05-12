@@ -14,7 +14,6 @@ from google import genai
 
 from pydantic_ai.models.fallback import FallbackModel
 from pydantic_ai import Agent
-import logfire
 from pydantic_ai.settings import ModelSettings
 
 logger = logging.getLogger(__name__)
@@ -126,8 +125,6 @@ def generate_activity_name_with_gemini(
     temperature: float,
     settings: Settings,
 ) -> tuple[list[NameResult], PromptResponse]:
-    logfire.configure(token=settings.logfire_token)
-
     input = data[data["id"] == activity_id].iloc[0]
     context_data = data.drop(data[data["id"] == activity_id].index)
 

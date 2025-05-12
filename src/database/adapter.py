@@ -247,6 +247,9 @@ class Database:
         with self.Session() as session:
             session.add(name_suggestion)
             session.commit()
+            session.refresh(
+                name_suggestion
+            )  # Refresh to keep it attached and up-to-date
 
     def delete_activity(self, activity_id: int, athlete_id: int):
         with self.Session() as session:
@@ -267,6 +270,9 @@ class Database:
         with self.Session() as session:
             session.add(prompt_response)
             session.commit()
+            session.refresh(
+                prompt_response
+            )  # Refresh to keep it attached and up-to-date
 
     def add_rename_history(self, old_name: str, new_name: str, activity_id: int):
         rename_history = RenameHistory(
