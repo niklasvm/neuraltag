@@ -1,8 +1,8 @@
 name: Deploy application to Google Cloud Platform
 
 on:
-  push:
-    branches: [ "master" ]
+  # push:
+  #   branches: [ "master" ]
   workflow_dispatch: {}
 
 jobs:
