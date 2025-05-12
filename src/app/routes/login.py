@@ -73,7 +73,9 @@ async def login(
     try:
         send_new_user_message(auth_uuid=auth_uuid)
     except Exception:
-        logger.exception("Error sending new user message to Telegram:")
+        logger.exception(
+            f"Error new user message to telegram bot | auth_uuid: {auth_uuid}"
+        )
 
     return RedirectResponse(url="/welcome")
 
