@@ -15,6 +15,9 @@ from google import genai
 from pydantic_ai.models.fallback import FallbackModel
 from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
+import jinja2 as j2
+
+from src.tasks.prompts import PROMPT_V1
 
 logger = logging.getLogger(__name__)
 
@@ -23,21 +26,6 @@ class NameResult(BaseModel):
     name: str
     description: str
     probability: float
-
-
-prompt = """
-[BEGIN CONTEXT]
-{context_data}
-[END CONTEXT]
-
-Given the following input:
-{input}
-
-[PROMPT]
-Provide {number_of_options} options for a name for the input activity that is consistent with the data. The names can have one or more emojis. For each name, explain in detail why it was chosen.
-Also provide a probability to describe confidence in the name. Order the final names from highest to lowest probability.
-Avoid using boring names like Afternoon Run, Evening Pilates or Morning Swim within the name. Rather be creative and use names that are fun and engaging.
-"""
 
 
 def run_agent(
@@ -133,7 +121,7 @@ def generate_activity_name_with_gemini(
     del context_data["id"]
 
     # create context
-    rendered_prompt = prompt.format(
+    rendered_prompt = PROMPT_V1.render(
         context_data=context_data.to_string(index=False),
         input=input.to_string(index=True),
         number_of_options=number_of_options,
