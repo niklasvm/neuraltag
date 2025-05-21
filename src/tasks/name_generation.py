@@ -15,7 +15,6 @@ from google import genai
 from pydantic_ai.models.fallback import FallbackModel
 from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
-import jinja2 as j2
 
 from src.tasks.prompts import PROMPT_V1
 
