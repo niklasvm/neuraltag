@@ -1,6 +1,5 @@
 import logging
-
-from pushbullet import Pushbullet
+from textwrap import dedent
 
 
 from src.database.adapter import Database
@@ -123,28 +122,34 @@ def rename_workflow(activity: Activity, settings: Settings, rename: bool):
         old_name=activity.name,
     )
 
-    # notify via pushbullet
-    logger.info("Publishing notification to Pushbullet")
-    pb = Pushbullet(settings.pushbullet_api_key)
-    pb.push_note(
-        title=top_name_suggestion,
-        body=top_name_description + f"\nProbability: {top_name_probability * 100:.0f}%",
+    # create notification message containing athlete_id, athlete name, activity_id, activity name and description
+    athlete = db.get_user_by_athlete_id(
+        athlete_id=activity.athlete_id,
     )
+    telegram_message = dedent(f"""
+    <b>Activity rename workflow completed</b>
+    
+    <b>Activity ID:</b> {activity.activity_id}
+    <b>Athlete ID:</b> {activity.athlete_id}
+    <b>Athlete Name:</b> {athlete.name} {athlete.lastname}
+    <b>Name:</b> {top_name_suggestion}
+    <b>Description:</b> {top_name_description}
+    <b>Probability:</b> {top_name_probability * 100:.0f}%
+    """).strip()
+
+    # notify via pushbullet
+    # logger.info("Publishing notification to Pushbullet")
+    # pb = Pushbullet(settings.pushbullet_api_key)
+    # pb.push_note(
+    #     title=top_name_suggestion,
+    #     body=top_name_description + f"\nProbability: {top_name_probability * 100:.0f}%",
+    # )
 
     tb = TelegramBot(
         token=settings.telegram_bot_token,
         chat_id=settings.telegram_chat_id,
         parse_mode="HTML",
     )
-    telegram_message = "<b>New activity update:</b>\n\n"
-    for idx, name_suggestion in enumerate(name_suggestions[:5]):
-        telegram_message += (
-            f"<b>{idx + 1} {name_suggestion.name}</b>\n"
-            f"<i>Probability: {name_suggestion.probability}</i>\n"
-            f"{name_suggestion.description}\n\n"
-        )
-
-    telegram_message = telegram_message.strip()
     logger.info("Publishing notification to Telegram")
     try:
         tb.send_message(
