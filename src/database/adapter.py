@@ -327,3 +327,32 @@ class Database:
                 logger.info(f"No rename history found for activity {activity_id}")
                 return None
             return rename_history
+
+    def get_naming_strategy_version_by_activity_id(self, activity_id: int) -> str:
+        with self.Session() as session:
+            activity = (
+                session.query(Activity)
+                .filter(Activity.activity_id == activity_id)
+                .first()
+            )
+            athlete_id = activity.athlete_id
+            user = session.query(User).filter(User.athlete_id == athlete_id).first()
+            naming_strategy_version = user.naming_strategy_version
+            if not naming_strategy_version:
+                logger.info(f"No prompt version found for activity {activity_id}")
+                return "v1"
+            return naming_strategy_version
+
+
+if __name__ == "__main__":
+    # Example usage
+    from src.app.config import settings
+
+    db = Database(
+        connection_string=settings.postgres_connection_string,
+        encryption_key=settings.encryption_key,
+    )
+
+    print(db.get_naming_strategy_version_by_activity_id(14570364200))
+
+    # Add more operations as needed

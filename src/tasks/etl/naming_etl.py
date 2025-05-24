@@ -9,16 +9,10 @@ from src.database.models import NameSuggestion
 from src.tasks.etl.base import ETL
 
 import logging
-from typing import Optional
-from pydantic import BaseModel
-from src.database.models import PromptResponse
-from google import genai
 
-from pydantic_ai.models.fallback import FallbackModel
-from pydantic_ai import Agent
-from pydantic_ai.settings import ModelSettings
 
-from src.tasks.etl.prompts import PROMPT_V1
+from src.tasks.etl.naming_strategies.v1.naming_strategy_v1 import NamingStrategyV1
+from src.tasks.etl.naming_strategies.v2.naming_strategy_v2 import NamingStrategyV2
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +21,7 @@ def run_name_activity_etl(
     llm_model: str,
     settings: Settings,
     activity_id: int,
+    naming_strategy_version: str | None = None,
     days: int = 365,
     temperature: float = 2.0,
 ):
@@ -36,6 +31,7 @@ def run_name_activity_etl(
         activity_id=activity_id,
         days=days,
         temperature=temperature,
+        naming_strategy_version=naming_strategy_version,
     )
     return etl.run()
 
@@ -53,6 +49,7 @@ class NameSuggestionETL(ETL):
         activity_id: int,
         days: int,
         temperature: float,
+        naming_strategy_version: str | None = None,
         number_of_options: int = 10,
     ):
         super().__init__(settings=settings)
@@ -61,6 +58,12 @@ class NameSuggestionETL(ETL):
         self.days = days
         self.temperature = temperature
         self.number_of_options = number_of_options
+        self.naming_strategy_version = naming_strategy_version
+
+        if self.naming_strategy_version is None:
+            self.naming_strategy_version = (
+                self.db.get_naming_strategy_version_by_activity_id(self.activity_id)
+            )
 
     def extract(self):
         self._activity = self.db.get_activity_by_id(activity_id=self.activity_id)
@@ -111,7 +114,16 @@ class NameSuggestionETL(ETL):
         self._activities_df = activities_df.rename({"activity_id": "id"}, axis=1)
 
     def load(self):
-        name_results, prompt_response = generate_activity_name_with_gemini(
+        mapping = {"v1": NamingStrategyV1, "v2": NamingStrategyV2}
+
+        try:
+            cls = mapping[self.naming_strategy_version]
+        except KeyError:
+            raise ValueError(
+                f"Prompt version {self.naming_strategy_version} not supported. Supported versions are: {', '.join(mapping.keys())}"
+            )
+
+        naming_strategy = cls(
             activity_id=self.activity_id,
             llm_model=self.llm_model,
             data=self._activities_df,
@@ -119,6 +131,8 @@ class NameSuggestionETL(ETL):
             temperature=self.temperature,
             settings=self.settings,
         )
+
+        name_results, prompt_response = naming_strategy.run()
 
         self.db.add_prompt_response(prompt_response)
 
@@ -140,122 +154,33 @@ class NameSuggestionETL(ETL):
         return name_suggestions
 
 
-class NameResult(BaseModel):
-    name: str
-    description: str
-    probability: float
+# TODO: Remove as unused
+# def run_genai(
+#     activity_id: int, api_key: str, temperature: Optional[float], rendered_prompt: str
+# ):
+#     client = genai.Client(api_key=api_key)
 
+#     config = {
+#         "response_schema": list[NameResult],
+#         "response_mime_type": "application/json",
+#     }
+#     if temperature:
+#         config["temperature"] = temperature
 
-def _run_agent(
-    *, activity_id: int, rendered_prompt: str, temperature: float, llm_model: str
-):
-    # ollama_model = OpenAIModel(
-    #     model_name='deepseek-r1:latest', provider=OpenAIProvider(base_url='http://localhost:11434/v1')
-    # )
-    fallback_nodel = FallbackModel(
-        llm_model,
-        "google-gla:gemini-2.0-flash",
-        "google-gla:gemini-1.5-pro",
-        "google-gla:gemini-1.5-flash",
-    )
-    naming_agent = Agent(
-        # "google-gla:gemini-1.5-pro",
-        # "google-gla:gemini-2.0-flash-lite-preview-02-05",
-        # "google-gla:gemini-2.5-pro-exp-03-25",
-        # llm_model,
-        # "openai:gpt-4o",
-        # "google-vertex:gemini-2.0-flash"
-        # "openai:gpt-4o-mini"
-        # ollama_model,
-        fallback_nodel,
-        instrument=True,
-        retries=1,
-        result_type=list[NameResult],
-        model_settings=ModelSettings(
-            temperature=temperature,
-        ),
-    )
+#     # MODEL="gemini-2.0-flash"
+#     MODEL = "gemini-2.5-pro-exp-03-25"
+#     response = client.models.generate_content(
+#         model=MODEL,
+#         contents=rendered_prompt,
+#         config=config,
+#     )
 
-    result = naming_agent.run_sync(
-        rendered_prompt,
-    )
+#     prompt_response = PromptResponse(
+#         activity_id=activity_id,
+#         prompt=rendered_prompt,
+#         response=response.text,
+#     )
 
-    prompt_response = PromptResponse(
-        activity_id=activity_id,
-        prompt=rendered_prompt,
-        response=str(result.data),
-        llm_model=llm_model,
-        temperature=temperature,
-    )
-
-    # parse response
-    return prompt_response, result.data
-
-
-def run_genai(
-    activity_id: int, api_key: str, temperature: Optional[float], rendered_prompt: str
-):
-    client = genai.Client(api_key=api_key)
-
-    config = {
-        "response_schema": list[NameResult],
-        "response_mime_type": "application/json",
-    }
-    if temperature:
-        config["temperature"] = temperature
-
-    # MODEL="gemini-2.0-flash"
-    MODEL = "gemini-2.5-pro-exp-03-25"
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=rendered_prompt,
-        config=config,
-    )
-
-    prompt_response = PromptResponse(
-        activity_id=activity_id,
-        prompt=rendered_prompt,
-        response=response.text,
-    )
-
-    # parse response
-    results = response.parsed
-    return prompt_response, results
-
-
-def generate_activity_name_with_gemini(
-    activity_id: int,
-    llm_model: str,
-    data: pd.DataFrame,
-    number_of_options: int,
-    temperature: float,
-    settings: Settings,
-) -> tuple[list[NameResult], PromptResponse]:
-    input = data[data["id"] == activity_id].iloc[0]
-    context_data = data.drop(data[data["id"] == activity_id].index)
-
-    del input["name"]
-    del input["id"]
-    del context_data["id"]
-
-    # create context
-    rendered_prompt = PROMPT_V1.render(
-        context_data=context_data.to_string(index=False),
-        input=input.to_string(index=True),
-        number_of_options=number_of_options,
-    )
-
-    with open("prompt.txt", "w") as f:
-        f.write(rendered_prompt)
-
-    # prompt_response_old, results_old = run_genai(
-    #     activity_id, api_key, temperature, rendered_prompt
-    # )
-    prompt_response, results = _run_agent(
-        activity_id=activity_id,
-        llm_model=llm_model,
-        rendered_prompt=rendered_prompt,
-        temperature=temperature,
-    )
-
-    return results, prompt_response
+#     # parse response
+#     results = response.parsed
+#     return prompt_response, results
