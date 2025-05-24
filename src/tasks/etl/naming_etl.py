@@ -18,7 +18,7 @@ from pydantic_ai.models.fallback import FallbackModel
 from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
 
-from src.tasks.prompts import PROMPT_V1
+from prompts import PROMPT_V1
 
 logger = logging.getLogger(__name__)
 
