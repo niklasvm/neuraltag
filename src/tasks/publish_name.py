@@ -51,6 +51,8 @@ def publish_new_activity_name(activity_id: int, settings: Settings):
     suggestion_description = selected_name_suggestion.description
 
     existing_description = activity.description
+    if existing_description is None:
+        existing_description = ""
     if NEURALTAG_SIGNATURE not in str(existing_description):
         updated_activity_description = (
             f"{existing_description}\n\n{NEURALTAG_SIGNATURE}".strip()
