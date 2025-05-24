@@ -16,7 +16,6 @@ def process_post_request(content: WebhookPostRequest, settings: Settings):
 
     if content.object_type == "activity":
         if content.aspect_type in ("create", "update"):
-            logger.info("f")
             activity_id = content.object_id
             athlete_id = content.owner_id
 
