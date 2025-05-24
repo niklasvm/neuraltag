@@ -18,9 +18,26 @@ from pydantic_ai.models.fallback import FallbackModel
 from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
 
-from prompts import PROMPT_V1
+from src.tasks.etl.prompts import PROMPT_V1
 
 logger = logging.getLogger(__name__)
+
+
+def run_name_activity_etl(
+    llm_model: str,
+    settings: Settings,
+    activity_id: int,
+    days: int = 365,
+    temperature: float = 2.0,
+):
+    etl = NameSuggestionETL(
+        llm_model=llm_model,
+        settings=settings,
+        activity_id=activity_id,
+        days=days,
+        temperature=temperature,
+    )
+    return etl.run()
 
 
 class NameSuggestionETL(ETL):

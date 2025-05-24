@@ -1,9 +1,9 @@
 import polyline
 from stravalib.model import SummaryActivity
-from typing import Any
 from shapely.geometry import Polygon
 
 from src.database.models import Activity
+
 
 def summary_activity_to_activity_model(summary_activity: SummaryActivity) -> Activity:
     activity_dict = summary_activity.model_dump()
