@@ -12,6 +12,7 @@ import logging
 
 
 from src.tasks.etl.naming_strategies.v1.naming_strategy_v1 import NamingStrategyV1
+from src.tasks.etl.naming_strategies.v2.naming_strategy_v2 import NamingStrategyV2
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ def run_name_activity_etl(
     llm_model: str,
     settings: Settings,
     activity_id: int,
+    naming_strategy_version: str | None = None,
     days: int = 365,
     temperature: float = 2.0,
 ):
@@ -29,6 +31,7 @@ def run_name_activity_etl(
         activity_id=activity_id,
         days=days,
         temperature=temperature,
+        naming_strategy_version=naming_strategy_version,
     )
     return etl.run()
 
@@ -46,6 +49,7 @@ class NameSuggestionETL(ETL):
         activity_id: int,
         days: int,
         temperature: float,
+        naming_strategy_version: str | None = None,
         number_of_options: int = 10,
     ):
         super().__init__(settings=settings)
@@ -54,6 +58,12 @@ class NameSuggestionETL(ETL):
         self.days = days
         self.temperature = temperature
         self.number_of_options = number_of_options
+        self.naming_strategy_version = naming_strategy_version
+
+        if self.naming_strategy_version is None:
+            self.naming_strategy_version = (
+                self.db.get_naming_strategy_version_by_activity_id(self.activity_id)
+            )
 
     def extract(self):
         self._activity = self.db.get_activity_by_id(activity_id=self.activity_id)
@@ -104,20 +114,16 @@ class NameSuggestionETL(ETL):
         self._activities_df = activities_df.rename({"activity_id": "id"}, axis=1)
 
     def load(self):
-        prompt_version = self.db.get_naming_strategy_version_by_activity_id(
-            self.activity_id
-        )
-
-        mapping = {"v1": NamingStrategyV1}
+        mapping = {"v1": NamingStrategyV1, "v2": NamingStrategyV2}
 
         try:
-            cls = mapping[prompt_version]
+            cls = mapping[self.naming_strategy_version]
         except KeyError:
             raise ValueError(
-                f"Prompt version {prompt_version} not supported. Supported versions are: {', '.join(mapping.keys())}"
+                f"Prompt version {self.naming_strategy_version} not supported. Supported versions are: {', '.join(mapping.keys())}"
             )
 
-        naming_stragegy = cls(
+        naming_strategy = cls(
             activity_id=self.activity_id,
             llm_model=self.llm_model,
             data=self._activities_df,
@@ -126,7 +132,7 @@ class NameSuggestionETL(ETL):
             settings=self.settings,
         )
 
-        name_results, prompt_response = naming_stragegy.run()
+        name_results, prompt_response = naming_strategy.run()
 
         self.db.add_prompt_response(prompt_response)
 

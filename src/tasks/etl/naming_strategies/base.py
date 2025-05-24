@@ -30,6 +30,8 @@ class BaseNamingStrategy(ABC):
         self.settings = settings
 
     def run(self) -> tuple[list[NameResult], PromptResponse]:
+        self._preprocess_data()
+
         input = self.data[self.data["id"] == self.activity_id].iloc[0]
         context_data = self.data.drop(
             self.data[self.data["id"] == self.activity_id].index
@@ -51,6 +53,9 @@ class BaseNamingStrategy(ABC):
         )
 
         return results, prompt_response
+
+    def _preprocess_data(self):
+        """Preprocess the data before creating the prompt."""
 
     @abstractmethod
     def _create_prompt(self, input: pd.Series, context_data: pd.DataFrame) -> str:
