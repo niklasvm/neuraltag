@@ -328,7 +328,7 @@ class Database:
                 return None
             return rename_history
 
-    def get_prompt_version_by_activity_id(self, activity_id: int) -> str:
+    def get_naming_strategy_version_by_activity_id(self, activity_id: int) -> str:
         with self.Session() as session:
             activity = (
                 session.query(Activity)
@@ -337,11 +337,11 @@ class Database:
             )
             athlete_id = activity.athlete_id
             user = session.query(User).filter(User.athlete_id == athlete_id).first()
-            prompt_version = user.prompt_version
-            if not prompt_version:
+            naming_strategy_version = user.naming_strategy_version
+            if not naming_strategy_version:
                 logger.info(f"No prompt version found for activity {activity_id}")
                 return "v1"
-            return prompt_version
+            return naming_strategy_version
 
 
 if __name__ == "__main__":
@@ -353,6 +353,6 @@ if __name__ == "__main__":
         encryption_key=settings.encryption_key,
     )
 
-    print(db.get_prompt_version_by_activity_id(14570364200))
+    print(db.get_naming_strategy_version_by_activity_id(14570364200))
 
     # Add more operations as needed

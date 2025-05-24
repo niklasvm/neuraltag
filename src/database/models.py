@@ -55,7 +55,7 @@ class User(Base):
     activity = relationship(
         "Activity", back_populates="user", cascade="all, delete-orphan"
     )
-    prompt_version = Column(String, nullable=True)
+    naming_strategy_version = Column(String, nullable=True)
 
 
 class Activity(Base):
