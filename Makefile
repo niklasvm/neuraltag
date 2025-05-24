@@ -42,5 +42,8 @@ off:
 	sudo systemctl stop strava.service
 	sudo systemctl stop nginx
 
+app:
+	fastapi run ./src/app/main.py
+
 logs:
 	journalctl -u strava.service -f -n 300

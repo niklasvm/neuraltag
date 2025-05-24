@@ -3,7 +3,8 @@ import logging
 from src.database.adapter import Database
 from src.app.schemas.webhook_post_request import WebhookPostRequest
 from src.tasks.etl import SingleActivityETL
-from src.tasks.rename_activity import rename_workflow  # Import your route modules
+from src.tasks.etl.naming_etl import run_name_activity_etl
+from src.tasks.publish_name import publish_new_activity_name
 from src.app.config import Settings
 
 
@@ -11,76 +12,82 @@ logger = logging.getLogger(__name__)
 
 
 def process_post_request(content: WebhookPostRequest, settings: Settings):
-    """
-    Processes the Strava webhook event by renaming the activity.
-    """
-
-    # handle activity creation and activity update events
     logger.info(f"Received webhook event: {content}")
-    if content.object_type == "activity" and (
-        content.aspect_type == "create" or content.aspect_type == "update"
-    ):
-        handle_activity_create_or_update_event(content, settings)
 
-    # handle unsubscribe events
-    elif content.object_type == "athlete" and content.aspect_type == "update":
-        if content.updates is not None and "authorized" in content.updates:
+    if content.object_type == "activity":
+        if content.aspect_type in ("create", "update"):
+            activity_id = content.object_id
+            athlete_id = content.owner_id
+
+            logger.info(
+                f"Running single activity etl for athlete {athlete_id} for activity {activity_id}"
+            )
+            SingleActivityETL(
+                settings=settings,
+                activity_id=activity_id,
+                athlete_id=athlete_id,
+            ).run()
+            logger.info(
+                f"Successfully ran single activity etl for athlete {athlete_id} for activity {activity_id}"
+            )
+
+            if content.aspect_type == "create" or (
+                content.aspect_type == "update"
+                and content.object_type == "activity"
+                and content.updates is not None
+                and "title" in content.updates
+                and content.updates.get("title") == "Rename"
+            ):
+                logger.info(f"Running name activity etl for activity {activity_id}")
+                run_name_activity_etl(
+                    activity_id=activity_id,
+                    llm_model="google-gla:gemini-2.5-pro-exp-03-25",
+                    settings=settings,
+                    days=365,
+                    temperature=2.0,
+                )
+                logger.info(
+                    f"Successfully ran name activity etl for activity {activity_id}"
+                )
+
+                logger.info(f"Running rename workflow for activity {activity_id}")
+                publish_new_activity_name(
+                    activity_id=activity_id,
+                    settings=settings,
+                )
+                logger.info(
+                    f"Successfully ran rename workflow for activity {activity_id}"
+                )
+
+        elif content.aspect_type == "delete" and content.object_type == "activity":
+            logger.info(f"Deleting activity {content.object_id} from database")
+            # delete activity from database
+            activity_id = content.object_id
+            db = Database(
+                settings.postgres_connection_string,
+                encryption_key=settings.encryption_key,
+            )
+            db.delete_activity(activity_id=activity_id, athlete_id=content.owner_id)
+            logger.info(f"Successfully deleted activity {activity_id} from database")
+
+        else:
+            print("Unsupported activity event aspect type detected")
+
+    elif content.object_type == "athlete":
+        if (
+            content.aspect_type == "update"
+            and content.updates is not None
+            and "authorized" in content.updates
+        ):
             if content.updates.get("authorized") == "false":
-                handle_unsubscribe_event(content, settings)
-
-    # handle activity delete events
-    elif content.aspect_type == "delete" and content.object_type == "activity":
-        handle_activity_delete_event(content, settings)
+                logger.info(f"Deleting athlete {content.owner_id} from database")
+                athlete_id = content.owner_id
+                db = Database(
+                    settings.postgres_connection_string,
+                    encryption_key=settings.encryption_key,
+                )
+                db.delete_user(athlete_id)
+                logger.info(f"Successfully deleted athlete {athlete_id} from database")
 
     else:
-        logger.info(f"Received unsupported event: {content}")
-
-
-def handle_activity_create_or_update_event(content, settings):
-    logger.info(f"Received create or update event: {content}")
-    activity_id = content.object_id
-    athlete_id = content.owner_id
-
-    activity = SingleActivityETL(
-        settings=settings,
-        activity_id=activity_id,
-        athlete_id=athlete_id,
-    ).run()
-    logger.info(f"Successfully loaded activity {activity_id} for athlete {athlete_id}")
-
-    if content.aspect_type == "create" and content.object_type == "activity":
-        rename_workflow(activity=activity, settings=settings, rename=False)
-
-    elif (
-        content.aspect_type == "update"
-        and content.object_type == "activity"
-        and content.updates is not None
-        and "title" in content.updates
-        and content.updates.get("title") == "Rename"
-    ):
-        rename_workflow(activity=activity, settings=settings, rename=True)
-
-
-def handle_activity_delete_event(content, settings):
-    logger.info(f"Received delete event: {content}")
-    # delete activity from database
-    activity_id = content.object_id
-    db = Database(
-        settings.postgres_connection_string, encryption_key=settings.encryption_key
-    )
-    db.delete_activity(activity_id=activity_id, athlete_id=content.owner_id)
-    logger.info(f"Successfully deleted activity {activity_id} from database")
-
-
-def handle_unsubscribe_event(content, settings):
-    logger.info(f"Received unsubscribe event: {content}")
-    # delete athlete from database
-
-    logger.info(f"Deleting athlete {content.owner_id} from database")
-    athlete_id = content.owner_id
-    db = Database(
-        settings.postgres_connection_string,
-        encryption_key=settings.encryption_key,
-    )
-    db.delete_user(athlete_id)
-    logger.info(f"Successfully deleted athlete {athlete_id} from database")
+        print("Unknown event type detected")
