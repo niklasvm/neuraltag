@@ -47,3 +47,9 @@ app:
 
 logs:
 	journalctl -u strava.service -f -n 300
+
+alembic-revision:
+	cd src/database/ && alembic revision --autogenerate -m "current state"
+
+alembic-upgrade:
+	cd src/database/ && alembic upgrade head
