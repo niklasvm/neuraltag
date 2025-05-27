@@ -62,16 +62,20 @@ async def login(
         user_type=user_type,
     ).run()
 
+    if user_type == "neuraltag":
+        days = 365 * 3
+    elif user_type == "history":
+        days = 90
+
     # fetch and load historic activities
-    background_tasks.add_task(run_historic_activity_etl, auth_uuid=auth_uuid)
+    background_tasks.add_task(run_historic_activity_etl, auth_uuid=auth_uuid, days=days)
 
     return RedirectResponse(url="/welcome")
 
 
-def run_historic_activity_etl(auth_uuid):
+def run_historic_activity_etl(auth_uuid, days:int):
     logger.info(f"Starting historic activity ETL | auth_uuid: {auth_uuid}")
     try:
-        days = 365 * 3
         # days = 365 * 5
         before: datetime.datetime = datetime.datetime.now()
         after: datetime.datetime = before - datetime.timedelta(days=days)
