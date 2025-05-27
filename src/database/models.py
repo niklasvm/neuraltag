@@ -18,6 +18,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 
+from src.tasks.constants import DEFAULT_NAMING_STRATEGY_VERSION
+
+
+
 
 Base = declarative_base()
 
@@ -64,7 +68,7 @@ class User(Base):
     activity = relationship(
         "Activity", back_populates="user", cascade="all, delete-orphan"
     )
-    naming_strategy_version = Column(String, nullable=False, default="v2")
+    naming_strategy_version = Column(String, nullable=False, default=DEFAULT_NAMING_STRATEGY_VERSION)
     user_type = Column(String, nullable=False, default="neuraltag")
 
 

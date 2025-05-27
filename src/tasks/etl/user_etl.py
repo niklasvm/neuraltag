@@ -1,6 +1,8 @@
 from src.app.config import Settings
 from src.database.models import User
+from src.tasks.constants import DEFAULT_NAMING_STRATEGY_VERSION
 from src.tasks.etl.base import ETL
+
 from src.tasks.strava import get_strava_client
 
 
@@ -33,6 +35,7 @@ class UserETL(ETL):
             city=self._athlete.city,
             state=self._athlete.state,
             country=self._athlete.country,
+            naming_strategy_version=DEFAULT_NAMING_STRATEGY_VERSION,
             user_type=self.user_type,
         )
 
