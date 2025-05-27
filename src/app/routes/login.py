@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from src.app.routes.authorization import AUTHORIZATION_CALLBACK
 from src.app.schemas.login_request import LoginRequest
 from src.app.config import settings
+from src.database.models import UserType
 from src.tasks.etl import AuthETL, UserETL, ActivitiesETL
 
 from src.database.adapter import Database
@@ -39,7 +40,14 @@ async def login(
             {"error": login_request.error},
         )
 
-    if login_request.state != settings.state:
+    incoming_state = login_request.state
+    if not incoming_state or '-' not in incoming_state:
+        raise HTTPException(status_code=400, detail="Invalid state format")
+    try:
+        state, user_type = incoming_state.split("-")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid state format")
+    if state != settings.state:
         raise HTTPException(status_code=400, detail="Invalid state parameter")
 
     try:
@@ -55,18 +63,23 @@ async def login(
     UserETL(
         auth_uuid=auth_uuid,
         settings=settings,
+        user_type=user_type,
     ).run()
 
+    if user_type == UserType.NEURALTAG.value:
+        days = 365 * 3
+    elif user_type == UserType.HISTORY.value:
+        days = 90
+
     # fetch and load historic activities
-    background_tasks.add_task(run_historic_activity_etl, auth_uuid=auth_uuid)
+    background_tasks.add_task(run_historic_activity_etl, auth_uuid=auth_uuid, days=days)
 
     return RedirectResponse(url="/welcome")
 
 
-def run_historic_activity_etl(auth_uuid):
+def run_historic_activity_etl(auth_uuid, days:int):
     logger.info(f"Starting historic activity ETL | auth_uuid: {auth_uuid}")
     try:
-        days = 365 * 3
         # days = 365 * 5
         before: datetime.datetime = datetime.datetime.now()
         after: datetime.datetime = before - datetime.timedelta(days=days)
@@ -109,5 +122,5 @@ def send_new_user_message(auth_uuid: str):
         parse_mode="HTML",
     )
     tb.send_message(
-        message=f"New user: {user.name} {user.lastname} ({user.athlete_id})\n",
+        message=f"New {user.user_type} user: {user.name} {user.lastname} ({user.athlete_id})\n",
     )
