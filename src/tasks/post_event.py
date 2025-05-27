@@ -2,6 +2,7 @@ import logging
 
 from src.database.adapter import Database
 from src.app.schemas.webhook_post_request import WebhookPostRequest
+from src.database.models import UserType
 from src.tasks.etl import SingleActivityETL
 from src.tasks.etl.naming_etl import run_name_activity_etl
 from src.tasks.publish_name import publish_new_activity_name
@@ -36,7 +37,7 @@ def process_post_request(content: WebhookPostRequest, settings: Settings):
                 encryption_key=settings.encryption_key,
             )
             user_type = db.get_user_type(athlete_id=athlete_id)
-            if user_type == "neuraltag":
+            if user_type == UserType.NEURALTAG.value:
                 if content.aspect_type == "create" or (
                     content.aspect_type == "update"
                     and content.object_type == "activity"
