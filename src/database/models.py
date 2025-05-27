@@ -56,6 +56,7 @@ class User(Base):
         "Activity", back_populates="user", cascade="all, delete-orphan"
     )
     naming_strategy_version = Column(String, nullable=True)
+    user_type = Column(String, nullable=False, default="neuraltag")
 
 
 class Activity(Base):
