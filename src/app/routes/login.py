@@ -40,9 +40,12 @@ async def login(
         )
 
     incoming_state = login_request.state
-    state, user_type = incoming_state.split("-")
-
-    
+    if not incoming_state or '-' not in incoming_state:
+        raise HTTPException(status_code=400, detail="Invalid state format")
+    try:
+        state, user_type = incoming_state.split("-")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid state format")
     if state != settings.state:
         raise HTTPException(status_code=400, detail="Invalid state parameter")
 
