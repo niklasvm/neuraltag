@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from src.app.routes.authorization import AUTHORIZATION_CALLBACK
 from src.app.schemas.login_request import LoginRequest
 from src.app.config import settings
+from src.database.models import UserType
 from src.tasks.etl import AuthETL, UserETL, ActivitiesETL
 
 from src.database.adapter import Database
@@ -65,9 +66,9 @@ async def login(
         user_type=user_type,
     ).run()
 
-    if user_type == "neuraltag":
+    if user_type == UserType.NEURALTAG.value:
         days = 365 * 3
-    elif user_type == "history":
+    elif user_type == UserType.HISTORY.value:
         days = 90
 
     # fetch and load historic activities
