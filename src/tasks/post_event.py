@@ -31,33 +31,39 @@ def process_post_request(content: WebhookPostRequest, settings: Settings):
                 f"Successfully ran single activity etl for athlete {athlete_id} for activity {activity_id}"
             )
 
-            if content.aspect_type == "create" or (
-                content.aspect_type == "update"
-                and content.object_type == "activity"
-                and content.updates is not None
-                and "title" in content.updates
-                and content.updates.get("title") == "Rename"
-            ):
-                logger.info(f"Running name activity etl for activity {activity_id}")
-                run_name_activity_etl(
-                    activity_id=activity_id,
-                    llm_model="google-gla:gemini-2.5-pro-exp-03-25",
-                    settings=settings,
-                    days=365,
-                    temperature=2.0,
-                )
-                logger.info(
-                    f"Successfully ran name activity etl for activity {activity_id}"
-                )
+            db = Database(
+                connection_string=settings.postgres_connection_string,
+                encryption_key=settings.encryption_key,
+            )
+            user_type = db.get_user_type(athlete_id=athlete_id)
+            if user_type == "neuraltag":
+                if content.aspect_type == "create" or (
+                    content.aspect_type == "update"
+                    and content.object_type == "activity"
+                    and content.updates is not None
+                    and "title" in content.updates
+                    and content.updates.get("title") == "Rename"
+                ):
+                    logger.info(f"Running name activity etl for activity {activity_id}")
+                    run_name_activity_etl(
+                        activity_id=activity_id,
+                        llm_model="google-gla:gemini-2.5-pro-exp-03-25",
+                        settings=settings,
+                        days=365,
+                        temperature=2.0,
+                    )
+                    logger.info(
+                        f"Successfully ran name activity etl for activity {activity_id}"
+                    )
 
-                logger.info(f"Running rename workflow for activity {activity_id}")
-                publish_new_activity_name(
-                    activity_id=activity_id,
-                    settings=settings,
-                )
-                logger.info(
-                    f"Successfully ran rename workflow for activity {activity_id}"
-                )
+                    logger.info(f"Running rename workflow for activity {activity_id}")
+                    publish_new_activity_name(
+                        activity_id=activity_id,
+                        settings=settings,
+                    )
+                    logger.info(
+                        f"Successfully ran rename workflow for activity {activity_id}"
+                    )
 
         elif content.aspect_type == "delete" and content.object_type == "activity":
             logger.info(f"Deleting activity {content.object_id} from database")

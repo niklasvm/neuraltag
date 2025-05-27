@@ -342,6 +342,14 @@ class Database:
                 logger.info(f"No prompt version found for activity {activity_id}")
                 return "v1"
             return naming_strategy_version
+        
+    def get_user_type(self,athlete_id: int) -> str | None:
+        with self.Session() as session:
+            user = session.query(User).filter(User.athlete_id == athlete_id).first()
+            if not user:
+                logger.info(f"No user found for athlete id {athlete_id}")
+                return "unknown"
+            return user.user_type if user.user_type else None
 
 
 if __name__ == "__main__":

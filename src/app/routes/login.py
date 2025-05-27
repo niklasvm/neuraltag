@@ -39,7 +39,11 @@ async def login(
             {"error": login_request.error},
         )
 
-    if login_request.state != settings.state:
+    incoming_state = login_request.state
+    state, user_type = incoming_state.split("-")
+
+    
+    if state != settings.state:
         raise HTTPException(status_code=400, detail="Invalid state parameter")
 
     try:
@@ -55,6 +59,7 @@ async def login(
     UserETL(
         auth_uuid=auth_uuid,
         settings=settings,
+        user_type=user_type,
     ).run()
 
     # fetch and load historic activities
@@ -109,5 +114,5 @@ def send_new_user_message(auth_uuid: str):
         parse_mode="HTML",
     )
     tb.send_message(
-        message=f"New user: {user.name} {user.lastname} ({user.athlete_id})\n",
+        message=f"New {user.user_type} user: {user.name} {user.lastname} ({user.athlete_id})\n",
     )

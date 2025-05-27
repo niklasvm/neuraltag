@@ -1,5 +1,6 @@
 from __future__ import annotations
 import datetime
+from enum import Enum
 import uuid
 from sqlalchemy import (
     UUID,
@@ -17,8 +18,16 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 
+
 Base = declarative_base()
 
+
+class UserType(Enum):
+    NEURALTAG = "neuraltag"
+    HISTORY = "history"
+
+    def __str__(self):
+        return self.value
 
 class Auth(Base):
     __tablename__ = "auth"
@@ -55,7 +64,7 @@ class User(Base):
     activity = relationship(
         "Activity", back_populates="user", cascade="all, delete-orphan"
     )
-    naming_strategy_version = Column(String, nullable=True)
+    naming_strategy_version = Column(String, nullable=False, default="v2")
     user_type = Column(String, nullable=False, default="neuraltag")
 
 
