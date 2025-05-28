@@ -54,7 +54,7 @@ async def history_login() -> RedirectResponse:
     url = client.authorization_url(
         client_id=settings.strava_client_id,
         redirect_uri=redirect_uri,
-        scope=["activity:read","activity:read_all"],
+        scope=["activity:read"],
         state=state,
     )
 
