@@ -1,5 +1,6 @@
 from __future__ import annotations
 import datetime
+import re
 from typing import Literal
 
 import pandas as pd
@@ -76,9 +77,36 @@ class NameSuggestionETL(ETL):
             athlete_id=athlete_id, before=before, after=after
         )
 
+        # exclude the activity itself from the list of activities
+        activities = [
+            activity
+            for activity in activities
+            if activity.activity_id != self.activity_id
+        ]
+
         self._activities = [self._activity] + activities
 
     def transform(self):
+        # blank out activities that have been named with NeuralTag 🤖 or match base strava names
+        base_strava_name_regex = r"(Morning|Lunch|Afternoon|Evening|Night) (Run|Ride|Swim|Pilates|Mountain Bike Ride|Workout|Weight Training|Trail Run|HIIT)"
+        n_activities_before = len(self._activities)
+        for idx, activity in enumerate(self._activities):
+            if (
+                str(activity.description)
+                and "named with NeuralTag 🤖" in activity.description
+                or re.search(base_strava_name_regex, activity.name)
+            ):
+                activity.name = "[blanked out]"
+                activity.description = "[blanked out]"
+
+                # update the activity in the database
+                self._activities[idx] = activity
+
+        n_activities_after = len(self._activities)
+        logger.info(
+            f"Blanked out {n_activities_before - n_activities_after} activities with NeuralTag 🤖 or base Strava names."
+        )
+
         activities_df = pd.DataFrame([activity.dict() for activity in self._activities])
         columns = [
             "activity_id",
