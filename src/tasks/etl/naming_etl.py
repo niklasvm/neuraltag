@@ -89,8 +89,9 @@ class NameSuggestionETL(ETL):
     def transform(self):
         # blank out activities that have been named with NeuralTag 🤖 or match base strava names
         base_strava_name_regex = r"(Morning|Lunch|Afternoon|Evening|Night) (Run|Ride|Swim|Pilates|Mountain Bike Ride|Workout|Weight Training|Trail Run|HIIT)"
-        n_activities_before = len(self._activities)
+        blanked_out_count = 0
         for idx, activity in enumerate(self._activities):
+            activity.description = str(activity.description)
             if (
                 str(activity.description)
                 and "named with NeuralTag 🤖" in activity.description
@@ -102,9 +103,10 @@ class NameSuggestionETL(ETL):
                 # update the activity in the database
                 self._activities[idx] = activity
 
-        n_activities_after = len(self._activities)
+                blanked_out_count += 1
+
         logger.info(
-            f"Blanked out {n_activities_before - n_activities_after} activities with NeuralTag 🤖 or base Strava names."
+            f"Blanked out {blanked_out_count} activities with NeuralTag 🤖 or base Strava names."
         )
 
         activities_df = pd.DataFrame([activity.dict() for activity in self._activities])
