@@ -97,8 +97,8 @@ class NameSuggestionETL(ETL):
                 and "named with NeuralTag 🤖" in activity.description
                 or re.search(base_strava_name_regex, activity.name)
             ):
-                activity.name = "[blanked out]"
-                activity.description = "[blanked out]"
+                activity.name = ""
+                activity.description = ""
 
                 # update the activity in the database
                 self._activities[idx] = activity
