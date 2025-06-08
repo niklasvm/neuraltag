@@ -34,19 +34,25 @@ deploy:
 	bash ./cicd/deploy/deploy.sh
 	git checkout pyproject.toml
 
-on:
-	sudo systemctl start strava.service
-	sudo systemctl start nginx
 
-off:
-	sudo systemctl stop strava.service
-	sudo systemctl stop nginx
 
 app:
 	fastapi run ./src/app/main.py
 
+start:
+	sudo systemctl start neuraltag.service
+
+stop:
+	sudo systemctl stop neuraltag.service
+
+restart:
+	sudo systemctl restart neuraltag.service
+
+status:
+	sudo systemctl status neuraltag.service
+
 logs:
-	journalctl -u strava.service -f -n 300
+	journalctl -u neuraltag.service -f -n 300
 
 alembic-revision:
 	cd src/database/ && alembic revision --autogenerate -m "current state"
