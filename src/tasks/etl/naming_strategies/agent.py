@@ -22,25 +22,17 @@ def run_naming_agent(
     # ollama_model = OpenAIModel(
     #     model_name='deepseek-r1:latest', provider=OpenAIProvider(base_url='http://localhost:11434/v1')
     # )
-    fallback_nodel = FallbackModel(
-        llm_model,
+    fallback_model = FallbackModel(
+        "google-gla:gemini-2.5-flash",
         "google-gla:gemini-2.0-flash",
         "google-gla:gemini-1.5-pro",
         "google-gla:gemini-1.5-flash",
     )
     naming_agent = Agent(
-        # "google-gla:gemini-1.5-pro",
-        # "google-gla:gemini-2.0-flash-lite-preview-02-05",
-        # "google-gla:gemini-2.5-pro-exp-03-25",
-        # llm_model,
-        # "openai:gpt-4o",
-        # "google-vertex:gemini-2.0-flash"
-        # "openai:gpt-4o-mini"
-        # ollama_model,
-        fallback_nodel,
+        fallback_model,
         instrument=True,
         retries=1,
-        result_type=list[NameResult],
+        output_type=list[NameResult],
         model_settings=ModelSettings(
             temperature=temperature,
         ),

@@ -21,6 +21,7 @@ logging.getLogger("stravalib.util.limiter.SleepingRateLimitRule").setLevel(
 
 athlete_id = os.environ.get("TEST_ATHLETE_ID")
 activity_id = os.environ.get("TEST_ACTIVITY_ID")
+activity_id = 14928896222
 
 load_dotenv(override=True)
 
@@ -30,7 +31,7 @@ def test_activity_create(athlete_id, activity_id):
     request = WebhookPostRequest(
         object_type="activity",
         aspect_type="create",
-        object_id=activity_id,
+        object_id=14928896222,
         owner_id=athlete_id,
         subscription_id=123,
         event_time=98734987345,
@@ -115,7 +116,7 @@ def test_athlete_unsubscribe(athlete_id):
 
 if __name__ == "__main__":
     test_activity_create(athlete_id, activity_id)
-    test_activity_update(athlete_id, activity_id)
-    test_activity_update_rename(athlete_id, activity_id)
-    test_activity_delete(athlete_id, activity_id)
+    # test_activity_update(athlete_id, activity_id)
+    # test_activity_update_rename(athlete_id, activity_id)
+    # test_activity_delete(athlete_id, activity_id)
     # test_athlete_unsubscribe(athlete_id)
