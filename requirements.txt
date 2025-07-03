@@ -83,7 +83,7 @@ numpy==2.2.3
     #   folium
     #   pandas
     #   shapely
-packaging==24.2
+packaging==25.0
     # via plotly
 pandas==2.2.3
     # via strava (pyproject.toml)
