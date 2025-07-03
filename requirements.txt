@@ -163,7 +163,7 @@ starlette==0.46.0
     # via fastapi
 stravalib==2.2
     # via strava (pyproject.toml)
-typer==0.15.2
+typer==0.16.0
     # via fastapi-cli
 types-python-dateutil==2.9.0.20241206
     # via arrow
