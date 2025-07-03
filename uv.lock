@@ -630,14 +630,14 @@ standard = [
 
 [[package]]
 name = "fastapi-throttle"
-version = "0.1.4"
+version = "0.1.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fastapi" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2b/a2/8380bb2683899370b61674ce7d27f3c357cb9761d7d52f8857ebc9f26c5d/fastapi_throttle-0.1.4.tar.gz", hash = "sha256:96c51a87c805e8114cc0d54c3d25157ddab1cf6ed579a2dcce4ff3f56f7e1937", size = 4369, upload-time = "2024-09-04T10:05:25.663Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/29/a5/799392d420303d4b012f01ddb76dc74e2ec650c466e5d6405faf3e27a547/fastapi_throttle-0.1.6.tar.gz", hash = "sha256:baf35c9adcb623b43d21724f4b84fe25b76b49987898a14a6652279a6eebbdd6", size = 5647, upload-time = "2025-06-14T18:27:35.914Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a0/e8/1586614e3299b25040c2639e040a8e5181c2e0f07a60750f8920f38c1630/fastapi_throttle-0.1.4-py3-none-any.whl", hash = "sha256:932b69eb0bc453d5d56576d0af7e9236b05249ec5dccbbea7feaa9aa40a8e204", size = 5193, upload-time = "2024-09-04T10:05:24.332Z" },
+    { url = "https://files.pythonhosted.org/packages/28/9b/3d6ea3a5d407e060e4a10e34929d5cb7e9c65d742b0cd0cdae690f7828e0/fastapi_throttle-0.1.6-py3-none-any.whl", hash = "sha256:a3fd6fe81a9e0d24a5e5eb0ad92a54e562e6b1a3a46388ca447f8e962b6add68", size = 6523, upload-time = "2025-06-14T18:27:34.885Z" },
 ]
 
 [[package]]
