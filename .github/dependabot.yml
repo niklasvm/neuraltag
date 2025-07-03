@@ -4,3 +4,22 @@ updates:
     directory: ".github/workflows"
     schedule:
       interval: "weekly"
+  
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Allow patch and minor version updates
+    open-pull-requests-limit: 10
+    # Group updates together to reduce PR noise
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+          - "minor"
+    # Monitor versions (check for updates but don't auto-create PRs for major versions)
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
