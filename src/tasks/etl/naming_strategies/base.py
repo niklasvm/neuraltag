@@ -42,9 +42,6 @@ class BaseNamingStrategy(ABC):
         del context_data["id"]
         rendered_prompt = self._create_prompt(input, context_data)
 
-        with open("prompt.txt", "w") as f:
-            f.write(rendered_prompt)
-
         prompt_response, results = run_naming_agent(
             activity_id=self.activity_id,
             llm_model=self.llm_model,

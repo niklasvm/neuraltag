@@ -48,7 +48,7 @@ def process_post_request(content: WebhookPostRequest, settings: Settings):
                     logger.info(f"Running name activity etl for activity {activity_id}")
                     run_name_activity_etl(
                         activity_id=activity_id,
-                        llm_model="google-gla:gemini-2.5-pro-exp-03-25",
+                        llm_model="google-gla:gemini-2.5-pro",
                         settings=settings,
                         days=365,
                         temperature=2.0,

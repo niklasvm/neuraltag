@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pandas as pd
-
+from pydantic_ai.messages import BinaryContent
 
 import logging
 # from google import genai
@@ -43,8 +43,20 @@ class NamingStrategyV2(BaseNamingStrategy):
                 )
 
     def _create_prompt(self, input: pd.Series, context_data: pd.DataFrame) -> str:
-        return PROMPT_V2.render(
+        binary_content = None
+        if input.stream_data is not None:
+            binary_content = BinaryContent(input.stream_data, media_type='image/png')
+
+        # remove binary content from input and context data
+        input = input.drop("stream_data")
+        context_data = context_data.drop("stream_data", axis=1)
+
+        rendered_prompt = PROMPT_V2.render(
             context_data=context_data.to_string(index=False),
             input=input.to_string(index=True),
             number_of_options=self.number_of_options,
         )
+        if binary_content is not None:
+            rendered_prompt = [binary_content,rendered_prompt]
+
+        return rendered_prompt
