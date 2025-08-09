@@ -14,6 +14,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Time,
+    LargeBinary
 )
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
@@ -147,6 +148,7 @@ class Activity(Base):
     map_centroid_lat = Column(Float)
     map_centroid_lon = Column(Float)
     map_area = Column(Float)
+    stream_data = Column(LargeBinary, nullable=True)
 
     created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
     updated_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
