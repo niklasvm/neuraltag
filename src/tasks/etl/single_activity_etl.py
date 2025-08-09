@@ -58,6 +58,19 @@ class SingleActivityETL(ETL):
 def _make_streams_png_plot(
     streams_df: pd.DataFrame, filename="activity_plot.png"
 ) -> bytes | None:
+    """
+    Generates a PNG plot visualizing activity stream data (such as speed, heartrate, altitude, and cadence)
+    against distance, using Plotly. The plot is returned as PNG image bytes.
+
+    Parameters:
+        streams_df (pd.DataFrame): DataFrame containing activity stream data. Must include a 'distance' column
+            and may include columns such as 'speed', 'heartrate', 'altitude', and 'cadence'.
+        filename (str, optional): Filename for the plot (not used for saving, only for Plotly metadata).
+
+    Returns:
+        bytes: PNG image bytes of the generated plot if required columns are present.
+        None: If the 'distance' column is missing or none of the expected data columns are found.
+    """
     x_axis = "distance"
 
     # validate x_axis present
