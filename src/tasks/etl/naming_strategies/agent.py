@@ -42,6 +42,9 @@ def run_naming_agent(
         rendered_prompt,
     )
 
+    # if rendered_prompt is a list, take the first element (string, discard binary content)
+    if isinstance(rendered_prompt, list):
+        rendered_prompt = rendered_prompt[1]
     prompt_response = PromptResponse(
         activity_id=activity_id,
         prompt=rendered_prompt,

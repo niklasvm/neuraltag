@@ -132,6 +132,7 @@ class NameSuggestionETL(ETL):
             "map_centroid_lon",
             "map_area",
             "suffer_score",
+            "stream_data"
         ]
 
         activities_df = activities_df[
@@ -163,6 +164,7 @@ class NameSuggestionETL(ETL):
         )
 
         name_results, prompt_response = naming_strategy.run()
+
 
         self.db.add_prompt_response(prompt_response)
 
