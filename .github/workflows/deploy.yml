@@ -15,7 +15,7 @@ jobs:
       packages: write
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - uses: 'google-github-actions/auth@v2'
       with:
         credentials_json: ${{ secrets.GCP_CREDENTIALS }}
