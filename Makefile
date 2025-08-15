@@ -37,7 +37,7 @@ deploy:
 
 
 app:
-	fastapi run ./src/app/main.py
+	uv run --frozen fastapi run ./src/app/main.py
 
 start:
 	sudo systemctl start neuraltag.service
