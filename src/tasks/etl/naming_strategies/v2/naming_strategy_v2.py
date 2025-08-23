@@ -44,8 +44,9 @@ class NamingStrategyV2(BaseNamingStrategy):
 
     def _create_prompt(self, input: pd.Series, context_data: pd.DataFrame) -> str:
         binary_content = None
-        if input.stream_data is not None:
-            binary_content = BinaryContent(input.stream_data, media_type='image/png')
+        
+        if input["stream_data"] is not None:
+            binary_content = BinaryContent(input["stream_data"], media_type='image/png')
 
         # remove binary content from input and context data
         input = input.drop("stream_data")
