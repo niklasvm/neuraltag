@@ -1,0 +1,5 @@
+# CODEOWNERS file for neuraltag repository
+# This file designates code owners for different parts of the repository.
+# For more information, see: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/repository-ownership-and-automation/about-code-owners
+
+* @niklasvm
