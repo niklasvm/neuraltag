@@ -1,0 +1,80 @@
+version: 1
+metadata:
+  name: Progressive Interval Session
+  description: Builds from easy to faster work then steady tempo
+  sport: running
+
+options:
+  hr_offset_mode: add_100          # or raw
+  default_intensity: active
+  repeat_mode_default: controller  # controller | expand
+
+steps:
+  - name: Warm Up
+    intensity: warmup
+    duration: { value: 12, unit: min }
+    target:
+      type: pace_range
+      low: 6:00
+      high: 5:20
+      unit: min_per_km
+
+  - type: group
+    mode: controller         # optional (would default to options.repeat_mode_default)
+    repeat: 5                # total sets desired
+    children:
+      - name: Fast 30s
+        duration: { value: 30, unit: s }
+        target:
+          type: pace_range
+          low: 4:00
+          high: 4:15
+          unit: min_per_km
+      - name: Easy 30s
+        intensity: rest
+        duration: { value: 30, unit: s }
+        target:
+          type: pace_range
+          low: 6:00
+          high: 5:30
+          unit: min_per_km
+
+  - name: Steady Block
+    duration: { value: 8, unit: km }
+    target:
+      type: pace
+      value: 4:05
+      unit: min_per_km
+
+  - name: Tempo HR
+    duration: { value: 15, unit: min }
+    target:
+      type: heart_rate_range
+      low: 150
+      high: 160
+      unit: bpm
+
+  - name: Cadence Focus
+    duration: { value: 5, unit: min }
+    target:
+      type: cadence_range
+      low: 85
+      high: 95
+      unit: rpm
+
+  - name: Power Cruise
+    duration: { value: 10, unit: min }
+    target:
+      type: power_range
+      low: 280
+      high: 300
+      unit: watts
+
+  - name: Cool Down
+    intensity: cooldown
+    duration: { value: 15, unit: min }
+    target:
+      type: pace_range
+      low: 6:30
+      high: 5:30
+      unit: min_per_km
