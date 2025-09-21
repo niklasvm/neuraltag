@@ -75,9 +75,9 @@ def generate_workout(
 def encode_to_fit(yaml_file: str, fit_file: str):
     """Encode a YAML workout to FIT using Java encoder without passing an explicit name.
     NOTE: This assumes the Java build & jars are already present."""
-    JAVA_DIR = Path(
-        "/Users/niklasvonmaltzahn/Documents/personal/neuraltag/workout_builder/java"
-    )
+    import workout_builder
+
+    JAVA_DIR = Path(workout_builder.__file__).parent / "java"
     JAVA_BUILD = JAVA_DIR / "build"
     JAVA_LIB_DIR = JAVA_DIR / "lib"
     FIT_JAR = JAVA_LIB_DIR / "fit.jar"

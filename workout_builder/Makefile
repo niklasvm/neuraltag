@@ -9,7 +9,6 @@ JAVA_LIB_DIR  := $(JAVA_DIR)/lib
 FIT_JAR       := $(JAVA_LIB_DIR)/fit.jar
 SNAKEYAML_JAR := $(shell ls $(JAVA_LIB_DIR)/snakeyaml-*.jar 2>/dev/null | head -n1)
 CLASSPATH     := $(JAVA_BUILD):$(FIT_JAR):$(SNAKEYAML_JAR)
-FETCH_SCRIPT  := $(JAVA_DIR)/fetch_deps.sh
 SHADED_JAR    := $(JAVA_DIR)/target/workout-encoder-0.1.0-SNAPSHOT-shaded.jar
 
 EXAMPLES_DIR  := examples
@@ -38,13 +37,11 @@ help:
 	@echo "Notes:";
 	@echo "  'java-jar' requires Maven. Otherwise use 'java-deps' + 'java-build' and run classpath directly.";
 
-java-deps: $(FETCH_SCRIPT)
-	@bash $(FETCH_SCRIPT)
 
 $(JAVA_BUILD):
 	mkdir -p $(JAVA_BUILD)
 
-java-build: java-deps $(JAVA_BUILD)
+java-build:
 	@echo "Compiling Java sources..."
 	@find $(JAVA_SRC_DIR) -name "*.java" > $(JAVA_BUILD)/sources.list
 	@javac -cp $(FIT_JAR):$(SNAKEYAML_JAR):$(JAVA_SRC_DIR) @$(JAVA_BUILD)/sources.list -d $(JAVA_BUILD)
