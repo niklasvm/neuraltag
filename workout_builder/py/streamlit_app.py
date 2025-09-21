@@ -127,7 +127,7 @@ if generate_btn:
     else:
         with st.spinner("Generating workout..."):
             try:
-                workout_def = generate_workout(prompt)
+                workout_def = generate_workout(prompt,model="google-gla:gemma-3-27b-it")
                 st.session_state.workout_def = workout_def
                 tmp_dir = Path(tempfile.mkdtemp(prefix="workout_fit_"))
                 yaml_path = tmp_dir / "workout.yaml"
