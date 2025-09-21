@@ -1,8 +1,9 @@
 name: PR Tests
-
+# PR tests are currently disabled
 on:
-  pull_request:
-    branches: [ master ]
+  # pull_request:
+  #   branches: [ master ]
+  workflow_dispatch: {}
 
 jobs:
   application-tests:

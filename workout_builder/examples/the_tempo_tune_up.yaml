@@ -1,0 +1,72 @@
+version: 1
+metadata:
+    name: The Tempo Tune-Up
+    description: A balanced workout designed to build aerobic capacity and sustained
+        speed, incorporating tempo intervals and a solid cool-down.
+    sport: running
+options:
+    hr_offset_mode: add_100
+    default_intensity: active
+    repeat_mode_default: controller
+steps:
+-   name: Warm-up
+    intensity: warmup
+    type: simple
+    duration:
+        value: 5.0
+        unit: minutes
+        open: false
+-   name: Interval Set 1
+    type: group
+    repeat: 5
+    children:
+    -   name: Tempo Burst
+        type: simple
+        duration:
+            value: 30.0
+            unit: seconds
+            open: false
+        target:
+            type: pace
+            value: '4:20'
+            unit: min_per_km
+    -   name: Rest
+        intensity: rest
+        type: simple
+        duration:
+            value: 30.0
+            unit: seconds
+            open: false
+-   name: Interval Set 2
+    type: group
+    repeat: 6
+    children:
+    -   name: Steady Tempo
+        type: simple
+        duration:
+            value: 1.0
+            unit: km
+            open: false
+        target:
+            type: pace_range
+            low: '3:45'
+            high: '3:50'
+            unit: min_per_km
+    -   name: Rest
+        intensity: rest
+        type: simple
+        duration:
+            value: 1.0
+            unit: minutes
+            open: false
+-   name: Cool-down
+    intensity: cooldown
+    type: simple
+    duration:
+        value: 15.0
+        unit: minutes
+        open: false
+    target:
+        type: pace
+        value: '6:00'
+        unit: min_per_km

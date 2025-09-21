@@ -1,0 +1,81 @@
+version: 1
+metadata:
+    name: The Endurance Builder
+    description: A comprehensive workout designed to build cardiovascular endurance
+        and speed. It starts with a gradual warm-up, moves into interval sprints,
+        progresses to sustained tempo runs, and concludes with a recovery cool-down.
+    sport: running
+options:
+    hr_offset_mode: add_100
+    default_intensity: active
+    repeat_mode_default: controller
+steps:
+-   name: Gentle Awakening
+    intensity: warmup
+    type: simple
+    duration:
+        value: 5.0
+        unit: minutes
+        open: false
+    note: Start with a slow jog, gradually increasing your pace to a comfortable warm-up.
+-   name: Speed Bursts
+    type: group
+    repeat: 5
+    children:
+    -   name: Sprint
+        intensity: active
+        type: simple
+        duration:
+            value: 30.0
+            unit: seconds
+            open: false
+        target:
+            type: pace
+            value: '4:20'
+            unit: min_per_km
+        note: Push your pace to a challenging but sustainable sprint.
+    -   name: Recovery
+        intensity: rest
+        type: simple
+        duration:
+            value: 30.0
+            unit: seconds
+            open: false
+        note: Recover with a very light jog or walk.
+-   name: Tempo Tune-Up
+    type: group
+    repeat: 6
+    children:
+    -   name: Sustained Effort
+        intensity: active
+        type: simple
+        duration:
+            value: 1.0
+            unit: km
+            open: false
+        target:
+            type: pace_range
+            low: '3:45'
+            high: '3:50'
+            unit: min_per_km
+        note: Maintain a strong, consistent pace within the target range.
+    -   name: Short Break
+        intensity: rest
+        type: simple
+        duration:
+            value: 1.0
+            unit: minute
+            open: false
+        note: Brief recovery before the next tempo segment.
+-   name: Cool Down
+    intensity: cooldown
+    type: simple
+    duration:
+        value: 15.0
+        unit: minutes
+        open: false
+    target:
+        type: pace
+        value: '6:00'
+        unit: min_per_km
+    note: Gradually bring your heart rate down with a relaxed jog.
