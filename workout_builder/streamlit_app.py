@@ -13,16 +13,24 @@ load_dotenv(override=True)
 
 # ---------------- Helper logic (inlined from notebook) ---------------- #
 
+
 def _sanitize_name(n: str) -> str:
     cleaned = re.sub(r"[^A-Za-z0-9 _-]", "", n)[:30]
     return cleaned.replace(" ", "_")
 
-def generate_workout(workout_description: str, model: str = "google-gla:gemini-2.5-flash-lite", use_structured_output: bool=False) -> WorkoutDefinition:
+
+def generate_workout(
+    workout_description: str,
+    model: str = "google-gla:gemini-2.5-flash-lite",
+    use_structured_output: bool = False,
+) -> WorkoutDefinition:
     schema = WorkoutDefinition.model_json_schema()
-    
+
     system_prompt = """You are a helpful assistant that helps translate user requests into structured workout definitions.
-    Provide the workout a creative name and description. Steps should also be creatively named with appropriate descriptions and notes"""
-    
+    Provide the workout a creative name and description. Steps should also be creatively named with appropriate descriptions and notes
+    If the user provides a name then use that name.
+    """
+
     if not use_structured_output:
         system_prompt = f"""
         {system_prompt}.
@@ -33,7 +41,9 @@ def generate_workout(workout_description: str, model: str = "google-gla:gemini-2
         
         """
         agent = Agent(model=model)
-        prompt = f"""Help me generate a json file for the workout: {workout_description}"""
+        prompt = (
+            f"""Help me generate a json file for the workout: {workout_description}"""
+        )
         result = agent.run_sync(system_prompt + prompt)
 
         # extract text between markdown code blocks
@@ -45,24 +55,29 @@ def generate_workout(workout_description: str, model: str = "google-gla:gemini-2
             print("No code block found")
 
         try:
-            workout: WorkoutDefinition = WorkoutDefinition.model_validate_json(json_text)
+            workout: WorkoutDefinition = WorkoutDefinition.model_validate_json(
+                json_text
+            )
         except:
             print("Failed to parse JSON, falling back to structured output")
             print(json_text)
     else:
         agent = Agent(model=model, system_prompt=system_prompt)
         prompt = f"""Help me generate a workout for: {workout_description}"""
-        result = agent.run_sync(prompt,output_type=WorkoutDefinition)
+        result = agent.run_sync(prompt, output_type=WorkoutDefinition)
 
         workout = result.output
 
     print(f"💡 Created workout: {workout.metadata.name}")
     return workout
 
+
 def encode_to_fit(yaml_file: str, fit_file: str):
     """Encode a YAML workout to FIT using Java encoder without passing an explicit name.
     NOTE: This assumes the Java build & jars are already present."""
-    JAVA_DIR = Path("/Users/niklasvonmaltzahn/Documents/personal/neuraltag/workout_builder/java")
+    JAVA_DIR = Path(
+        "/Users/niklasvonmaltzahn/Documents/personal/neuraltag/workout_builder/java"
+    )
     JAVA_BUILD = JAVA_DIR / "build"
     JAVA_LIB_DIR = JAVA_DIR / "lib"
     FIT_JAR = JAVA_LIB_DIR / "fit.jar"
@@ -75,20 +90,26 @@ def encode_to_fit(yaml_file: str, fit_file: str):
     meta_name = data.get("metadata", {}).get("name", "Workout")
     produced_filename = f"{_sanitize_name(meta_name)}.fit"
     import subprocess
-    subprocess.run(f"java -cp {CLASSPATH} {ENCODER_CLASS} {yaml_file}", shell=True, check=True)
+
+    subprocess.run(
+        f"java -cp {CLASSPATH} {ENCODER_CLASS} {yaml_file}", shell=True, check=True
+    )
     shutil.move(produced_filename, fit_file)
+
 
 st.set_page_config(page_title="Workout Builder", layout="wide")
 
 st.title("🏃 Workout Builder & FIT Generator")
 
 # Simplified UI (no advanced model/HR/structured controls)
-st.caption("Enter a description. The app uses a fixed model and settings under the hood.")
+st.caption(
+    "Enter a description. The app uses a fixed model and settings under the hood."
+)
 
 prompt = st.text_area(
     "Workout Prompt",
     height=200,
-    placeholder="Describe the workout (e.g. 10min warmup, 6x1km @4:00-4:05/km w/90s rest, 10min cooldown)"
+    placeholder="Describe the workout (e.g. 10min warmup, 6x1km @4:00-4:05/km w/90s rest, 10min cooldown)",
 )
 
 generate_btn = st.button("Generate Workout", type="primary")
@@ -111,13 +132,19 @@ if generate_btn:
                 tmp_dir = Path(tempfile.mkdtemp(prefix="workout_fit_"))
                 yaml_path = tmp_dir / "workout.yaml"
                 fit_path = tmp_dir / "workout.fit"
-                yaml_text_local = yaml.safe_dump(workout_def.model_dump(mode="json", exclude_none=True), sort_keys=False, indent=2)
-                with open(yaml_path, 'w') as f:
+                yaml_text_local = yaml.safe_dump(
+                    workout_def.model_dump(mode="json", exclude_none=True),
+                    sort_keys=False,
+                    indent=2,
+                )
+                with open(yaml_path, "w") as f:
                     f.write(yaml_text_local)
                 try:
                     encode_to_fit(str(yaml_path), str(fit_path))
                     st.session_state.fit_bytes = fit_path.read_bytes()
-                    st.session_state.fit_filename = f"{_sanitize_name(workout_def.metadata.name)}.fit"
+                    st.session_state.fit_filename = (
+                        f"{_sanitize_name(workout_def.metadata.name)}.fit"
+                    )
                 finally:
                     shutil.rmtree(tmp_dir, ignore_errors=True)
             except Exception as e:
@@ -134,7 +161,7 @@ if workout_def:
             "Download FIT File",
             data=st.session_state.fit_bytes,
             file_name=st.session_state.fit_filename or "workout.fit",
-            mime="application/octet-stream"
+            mime="application/octet-stream",
         )
     else:
         st.warning("FIT file not available.")
@@ -143,69 +170,96 @@ if workout_def:
     def expand_to_df(w: WorkoutDefinition) -> pd.DataFrame:
         rows = []
         for step in w.expand():
-            d = step.get('duration', {})
-            t = step.get('target', {})
-            dur_type = d.get('type')
-            if dur_type == 'time':
-                secs = d['time_ms']/1000
-                dur_display = f"{secs:.0f}s"
-            elif dur_type == 'distance':
-                km = d['distance_cm']/100/1000
+            # Skip controller/group repeat steps for display purposes only
+            kind_val = step.get("kind") or ""
+            if kind_val in {"repeat", "group", "repeat_controller", "controller"}:
+                continue
+            d = step.get("duration", {})
+            t = step.get("target", {})
+            dur_type = d.get("type")
+            if dur_type == "time":
+                total_seconds = int(round(d["time_ms"] / 1000))
+                hours = total_seconds // 3600
+                minutes = (total_seconds % 3600) // 60
+                seconds = total_seconds % 60
+                if hours > 0:
+                    dur_display = f"{hours:01d}:{minutes:02d}:{seconds:02d}"
+                else:
+                    dur_display = (
+                        f"{minutes:02d}:{seconds:02d}"  # mm:SS when under 1 hour
+                    )
+            elif dur_type == "distance":
+                km = d["distance_cm"] / 100 / 1000
                 dur_display = f"{km:.2f} km"
-            elif dur_type == 'calories':
+            elif dur_type == "calories":
                 dur_display = f"{d['calories']} cal"
-            elif dur_type == 'hr_greater_than':
+            elif dur_type == "hr_greater_than":
                 dur_display = f"HR > {d['bpm']}"
-            elif dur_type == 'hr_less_than':
+            elif dur_type == "hr_less_than":
                 dur_display = f"HR < {d['bpm']}"
             else:
                 dur_display = dur_type
-            target_kind = t.get('kind') or t.get('zone')
-            if target_kind in ('pace','pace_range'):
-                low = t.get('low')
-                high = t.get('high')
+            target_kind = t.get("kind") or t.get("zone")
+            if target_kind in ("pace", "pace_range"):
+                low = t.get("low")
+                high = t.get("high")
+
                 def speed_to_pace(s):
                     if not s:
                         return None
-                    mps = s/1000.0
+                    mps = s / 1000.0
                     if mps == 0:
                         return None
-                    sec_per_km = 1000.0/mps
-                    mins = int(sec_per_km//60)
-                    secs = int(round(sec_per_km%60))
+                    sec_per_km = 1000.0 / mps
+                    mins = int(sec_per_km // 60)
+                    secs = int(round(sec_per_km % 60))
                     return f"{mins}:{secs:02d}"
-                if target_kind == 'pace':
+
+                if target_kind == "pace":
                     tgt_display = speed_to_pace(low)
                 else:
                     tgt_display = f"{speed_to_pace(low)} - {speed_to_pace(high)}"
-            elif target_kind in ('hr_range','cadence_range','power_range'):
+            elif target_kind in ("hr_range", "cadence_range", "power_range"):
                 tgt_display = f"{t.get('low')}-{t.get('high')}"
-            elif target_kind == 'hr_zone':
+            elif target_kind == "hr_zone":
                 tgt_display = f"Zone {t.get('zone')}"
-            elif target_kind == 'power_zone':
+            elif target_kind == "power_zone":
                 tgt_display = f"Power Z{t.get('zone')}"
-            elif target_kind == 'open' or target_kind is None:
-                tgt_display = 'Open'
+            elif target_kind == "open" or target_kind is None:
+                tgt_display = "Open"
             else:
                 tgt_display = target_kind
-            rows.append({
-                'index': step['index'],
-                'name': step.get('name'),
-                'kind': step.get('kind'),
-                'intensity': step.get('intensity'),
-                'duration_type': dur_type,
-                'duration': dur_display,
-                'target': tgt_display,
-                'note': step.get('note')
-            })
+            rows.append(
+                {
+                    "index": step["index"],
+                    "name": step.get("name"),
+                    "kind": step.get("kind"),
+                    "intensity": step.get("intensity"),
+                    "duration_type": dur_type,
+                    "duration": dur_display,
+                    "target": tgt_display,
+                    "note": step.get("note"),
+                }
+            )
         return pd.DataFrame(rows)
 
-    st.subheader("Expanded Steps")
-    st.dataframe(expand_to_df(workout_def), use_container_width=True)
+    # st.subheader("Expanded Steps")
+    # st.dataframe(expand_to_df(workout_def), use_container_width=True)
 
     # YAML removed per simplified UI request
 else:
     st.info("Enter a prompt and click 'Generate Workout' to begin.")
+
+# Show YAML at absolute bottom if a workout exists
+if workout_def:
+    st.markdown("---")
+    st.subheader("YAML Definition (Read-Only)")
+    yaml_bottom = yaml.safe_dump(
+        workout_def.model_dump(mode="json", exclude_none=True),
+        sort_keys=False,
+        indent=2,
+    )
+    st.code(yaml_bottom, language="yaml")
 
 st.markdown("---")
 with st.expander("How to Use & Device Transfer"):
