@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.neuraltag</groupId>
+	<artifactId>workout-encoder</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
+	<name>NeuralTag Workout FIT Encoder</name>
+	<description>Encodes YAML workout definitions into Garmin FIT workout files.</description>
+	<url>https://github.com/niklasvm/strava</url>
+
+	<properties>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+		<!-- Pin dependency versions here for reproducible builds -->
+	<!-- FIT SDK version (local jar in lib/). Matches FitSDKRelease_21.171.00 directory. -->
+	<fit.sdk.version>21.171.0</fit.sdk.version>
+		<snakeyaml.version>2.2</snakeyaml.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<dependencies>
+		<!-- YAML parsing only; FIT SDK classes are provided via fat jar assembly using system path include below -->
+		<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<version>${snakeyaml.version}</version>
+		</dependency>
+		<!-- FIT SDK dependency (must be installed locally with install_fit_sdk.sh) -->
+		<dependency>
+			<groupId>com.garmin.fit</groupId>
+			<artifactId>fit</artifactId>
+			<version>${fit.sdk.version}</version>
+		</dependency>
+	</dependencies>
+
+		<repositories>
+			<repository>
+				<id>central</id>
+				<name>Maven Central</name>
+				<url>https://repo1.maven.org/maven2</url>
+			</repository>
+		</repositories>
+
+	<build>
+		<plugins>
+			<!-- Build an uber (fat) jar containing dependencies (SnakeYAML + FIT SDK system jar) -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.5.2</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals><goal>shade</goal></goals>
+						<configuration>
+							<artifactSet>
+								<includes>
+									<include>org.yaml:snakeyaml</include>
+									<include>com.garmin.fit:fit</include>
+								</includes>
+							</artifactSet>
+							<createDependencyReducedPom>true</createDependencyReducedPom>
+							<transformers>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>com.neuraltag.workout.EncodeYamlWorkout</mainClass>
+								</transformer>
+							</transformers>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

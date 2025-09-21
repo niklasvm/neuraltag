@@ -7,8 +7,10 @@ JAVA_SRC_DIR  := $(JAVA_DIR)/src
 JAVA_BUILD    := $(JAVA_DIR)/build
 JAVA_LIB_DIR  := $(JAVA_DIR)/lib
 FIT_JAR       := $(JAVA_LIB_DIR)/fit.jar
-SNAKEYAML_JAR := $(JAVA_LIB_DIR)/snakeyaml-2.2.jar
+SNAKEYAML_JAR := $(shell ls $(JAVA_LIB_DIR)/snakeyaml-*.jar 2>/dev/null | head -n1)
 CLASSPATH     := $(JAVA_BUILD):$(FIT_JAR):$(SNAKEYAML_JAR)
+FETCH_SCRIPT  := $(JAVA_DIR)/fetch_deps.sh
+SHADED_JAR    := $(JAVA_DIR)/target/workout-encoder-0.1.0-SNAPSHOT-shaded.jar
 
 EXAMPLES_DIR  := examples
 OUT_DIR       := $(EXAMPLES_DIR)/output
@@ -23,7 +25,9 @@ PYTHON        ?= python
 
 help:
 	@echo "Workout Builder Targets:";
-	@echo "  make java-build            Compile Java encoder (EncodeYamlWorkout)";
+	@echo "  make java-deps             Download Java dependency jars (fit.jar, snakeyaml)";
+	@echo "  make java-build            Compile Java encoder (EncodeYamlWorkout) using downloaded jars";
+	@echo "  make java-jar              Build shaded executable jar via Maven (if mvn present)";
 	@echo "  make encode-yaml YAML=... [NAME=CustomName]  Generate FIT from YAML";
 	@echo "  make encode-all            Run encoder for every YAML in $(EXAMPLES_DIR)";
 	@echo "  make list-examples         List available example YAML files";
@@ -31,15 +35,26 @@ help:
 	@echo "Variables:";
 	@echo "  YAML=path/to/file.yml (required for encode-yaml)";
 	@echo "  NAME=OverrideWorkoutName (optional)";
+	@echo "Notes:";
+	@echo "  'java-jar' requires Maven. Otherwise use 'java-deps' + 'java-build' and run classpath directly.";
+
+java-deps: $(FETCH_SCRIPT)
+	@bash $(FETCH_SCRIPT)
 
 $(JAVA_BUILD):
 	mkdir -p $(JAVA_BUILD)
 
-java-build: $(JAVA_BUILD)
+java-build: java-deps $(JAVA_BUILD)
 	@echo "Compiling Java sources..."
 	@find $(JAVA_SRC_DIR) -name "*.java" > $(JAVA_BUILD)/sources.list
 	@javac -cp $(FIT_JAR):$(SNAKEYAML_JAR):$(JAVA_SRC_DIR) @$(JAVA_BUILD)/sources.list -d $(JAVA_BUILD)
 	@echo "Compilation complete."
+
+java-jar:
+	@if ! command -v mvn >/dev/null 2>&1; then echo "Maven not installed. Install Maven or use 'make java-build'"; exit 1; fi
+	@echo "Building shaded jar with Maven..."
+	@(cd $(JAVA_DIR) && mvn -q -e -DskipTests package)
+	@echo "Shaded jar: $(SHADED_JAR)"
 
 clean:
 	rm -rf $(JAVA_BUILD)
