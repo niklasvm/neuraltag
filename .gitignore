@@ -175,3 +175,4 @@ data/
 private/
 .terraform/
 .terraform.lock.hcl
+workout_builder/FitSDKRelease_21.171.00/**/*
