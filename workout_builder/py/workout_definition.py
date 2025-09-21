@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import List, Optional, Literal, Union
 from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict
 from typing import Annotated
-import os
 from enum import Enum
 
 
@@ -31,6 +30,10 @@ class DurationUnit(str, Enum):
     minutes = "minutes"
     km = "km"
     mtr = "m"   # optional alias if you want distance in meters (not required in YAML above)
+    calories = "calories"
+    cal = "cal"
+    hr_greater_than = "hr_greater_than"  # threshold duration until HR > value
+    hr_less_than = "hr_less_than"        # threshold duration until HR < value
 
 
 class TargetTypeKind(str, Enum):
@@ -137,6 +140,12 @@ class DurationSpec(BaseModel):
         if unit == "m":  # optional meters if you keep it
             distance_cm = int(val * 100)
             return {"type": "distance", "distance_cm": distance_cm}
+        if unit in {"calories", "cal"}:
+            return {"type": "calories", "calories": int(val)}
+        if unit == "hr_greater_than":
+            return {"type": "hr_greater_than", "bpm": int(val)}
+        if unit == "hr_less_than":
+            return {"type": "hr_less_than", "bpm": int(val)}
         raise ValueError(f"Unsupported duration unit '{unit}'")
 
 
@@ -286,12 +295,16 @@ class BaseStep(BaseModel):
 
 class SimpleStep(BaseStep):
     type: Literal["simple"] = "simple"
-    duration: DurationSpec
+    # duration now optional; if omitted treat as open
+    duration: Optional[DurationSpec] = None
+    # target optional; if omitted treat as open
     target: Optional[Target] = None
+    note: Optional[str] = None
 
     def to_internal(self, idx: int, defaults: dict) -> List[dict]:
         inten = self.intensity or defaults.get("default_intensity", Intensity.active)
-        duration_norm = self.duration.to_internal()
+        # If duration missing, default to open
+        duration_norm = self.duration.to_internal() if self.duration else {"type": "open"}
         target_norm = (
             self.target.to_internal(defaults["hr_offset_mode"])
             if self.target is not None
@@ -303,7 +316,8 @@ class SimpleStep(BaseStep):
             "name": self.name or f"Step {idx}",
             "intensity": inten.value,
             "duration": duration_norm,
-            "target": target_norm
+            "target": target_norm,
+            **({"note": self.note} if self.note else {})
         }]
 
 

@@ -1,0 +1,129 @@
+version: 1
+metadata:
+    name: The Rocket Builder
+    description: This workout is designed to build your engine for longer efforts
+        and prepare you for faster paces. It starts with a steady warm-up, progresses
+        through short, sharp intervals with recovery, hits key race pace segments,
+        and finishes with a solid cool-down.
+    sport: running
+options:
+    hr_offset_mode: add_100
+    default_intensity: active
+    repeat_mode_default: controller
+steps:
+-   name: Gentle Ignition
+    intensity: warmup
+    type: simple
+    duration:
+        value: 10.0
+        unit: minutes
+        open: false
+    target:
+        type: pace_range
+        low: '5:52'
+        high: '5:30'
+        unit: min_per_km
+    note: Start with a relaxed pace, focusing on smooth, easy breathing and a comfortable
+        stride. Let your body gradually wake up.
+-   name: Ignition Sequence
+    type: group
+    repeat: 5
+    children:
+    -   name: Burner Boost
+        intensity: active
+        type: simple
+        duration:
+            value: 30.0
+            unit: seconds
+            open: false
+        target:
+            type: pace
+            value: '4:00'
+            unit: min_per_km
+        note: Gradually increase your pace to the target pace for the main set. Focus
+            on building speed smoothly and maintaining good form.
+    -   name: Controlled Descent
+        intensity: rest
+        type: simple
+        duration:
+            value: 30.0
+            unit: seconds
+            open: false
+        target:
+            type: pace_range
+            low: '5:52'
+            high: '5:30'
+            unit: min_per_km
+        note: Ease back to a relaxed, easy pace. Allow your heart rate to recover
+            before the next build.
+-   name: Coordination Drills
+    type: group
+    children:
+    -   name: High Knees
+        intensity: active
+        type: simple
+        duration:
+            value: 20.0
+            unit: seconds
+            open: false
+        note: Focus on bringing your knees up high and driving your arms. Think about
+            quick, explosive movements.
+    -   name: Butt Kicks
+        intensity: active
+        type: simple
+        duration:
+            value: 20.0
+            unit: seconds
+            open: false
+        note: Bring your heels up towards your glutes. This helps engage your hamstrings
+            and improve stride efficiency.
+    -   name: High Knee & Butt Kick Combo
+        intensity: active
+        type: simple
+        duration:
+            value: 20.0
+            unit: seconds
+            open: false
+        note: Alternating between high knees and butt kicks to promote dynamic movement
+            and coordination.
+-   name: Race Pace Power
+    type: group
+    repeat: 7
+    children:
+    -   name: Target Kilometer
+        intensity: active
+        type: simple
+        duration:
+            value: 1.0
+            unit: km
+            open: false
+        target:
+            type: pace_range
+            low: '4:07'
+            high: '3:54'
+            unit: min_per_km
+        note: Hold this challenging but sustainable pace. Focus on maintaining consistent
+            effort and form.
+    -   name: Recovery Interval
+        intensity: rest
+        type: simple
+        duration:
+            value: 1.0
+            unit: minutes
+            open: false
+        note: Walk or jog very slowly. Allow your body to recover, but don't completely
+            stop moving.
+-   name: Controlled Descent
+    intensity: cooldown
+    type: simple
+    duration:
+        value: 5.0
+        unit: minutes
+        open: false
+    target:
+        type: pace_range
+        low: '5:52'
+        high: '5:30'
+        unit: min_per_km
+    note: Gradually reduce your pace to a very easy, conversational effort. Focus
+        on deep breaths and letting your muscles relax.

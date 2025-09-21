@@ -1,0 +1,100 @@
+metadata:
+  name: Generic run workout
+  description: >-
+    These are RHS notes. Likely overall workout notes. Length limited to 512
+options:
+  hr_offset_mode: add_100
+steps:
+  # 0: Warmup open step (duration_type OPEN in reference shows as type=5 with no value)
+  - name: Warmup
+    intensity: warmup
+      
+  # 1: Active open step
+  - name: Active open
+    intensity: active
+
+  # 2: Step with note (open)
+  - name: Note step
+    intensity: interval
+    note: This is a step note and is limited to 200 characters
+
+  # 3: Rest open
+  - name: Rest open
+    intensity: rest
+
+  # 4: Cooldown open
+  - name: Cooldown open
+    intensity: cooldown
+
+  # 5: Timed 1000 ms (?) In reference duration_time=1000.0 (ms). That's 1 second; likely example. We'll use 1s.
+  - name: 1s Time
+    intensity: active
+    duration:
+      value: 1
+      unit: s
+
+  # 6: Distance 1000 m
+  - name: 1k dist
+    intensity: active
+    duration:
+      value: 1000
+      unit: m
+
+  # 7: Calories 100
+  - name: 100 cal
+    intensity: active
+    duration:
+      value: 100
+      unit: calories
+
+  # 8: HR greater than 250 (raw from reference). Could be threshold demonstration.
+  - name: HR >250
+    intensity: active
+    duration:
+      value: 250
+      unit: hr_greater_than
+
+  # 9: Pace range 5:30 - 5:30 (example used custom_target_speed range). We'll translate speeds to pace.
+  - name: Pace range
+    intensity: active
+    note: This is a step note
+    duration:
+      value: 0
+      unit: s
+      open: true
+    target:
+      type: pace_range
+      low: 6:00
+      high: 5:30
+
+  # 10: HR zone 3 over 1000 m
+  - name: HR zone 3
+    intensity: active
+    duration:
+      value: 1000
+      unit: m
+    target:
+      type: heart_rate_zone
+      zone: 3
+
+  # 11: HR range 120-130 over 1000 m (will +100 offset -> 220-230 as in reference)
+  - name: HR 120-130
+    intensity: active
+    duration:
+      value: 1000
+      unit: m
+    target:
+      type: heart_rate_range
+      low: 120
+      high: 130
+
+  # 12: Cadence range 87-92 over 1000 m
+  - name: Cad 87-92
+    intensity: active
+    duration:
+      value: 1000
+      unit: m
+    target:
+      type: cadence_range
+      low: 87
+      high: 92

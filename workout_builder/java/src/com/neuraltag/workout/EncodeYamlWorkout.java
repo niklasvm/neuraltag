@@ -150,11 +150,20 @@ public class EncodeYamlWorkout {
                 (String) stepMap.getOrDefault("intensity", ctx.defaultIntensity.name().toLowerCase()));
         step.setIntensity(intensity);
         Map<String, Object> duration = (Map<String, Object>) stepMap.get("duration");
-        if (duration == null)
-            throw new IllegalArgumentException("simple step missing duration");
-        applyDuration(duration, step);
+        if (duration == null) {
+            // default open duration
+            step.setDurationType(WktStepDuration.OPEN);
+            step.setDurationValue(0L);
+        } else {
+            applyDuration(duration, step);
+        }
         Map<String, Object> target = (Map<String, Object>) stepMap.get("target");
         applyTarget(target, step, ctx);
+        // Optional per-step note
+        String note = (String) stepMap.get("note");
+        if (note != null && !note.isBlank()) {
+            applyStepNote(step, note);
+        }
         return step;
     }
 
@@ -173,11 +182,12 @@ public class EncodeYamlWorkout {
         if (unit == null)
             throw new IllegalArgumentException("duration unit required");
         unit = unit.toLowerCase();
+        // Order matters. Distinguish minutes vs meters: use explicit minute tokens; treat lone 'm' as meters.
         if (isAny(unit, "s", "sec", "secs", "second", "seconds")) {
             long ms = (long) (value * 1000.0);
             step.setDurationType(WktStepDuration.TIME);
             step.setDurationValue(ms);
-        } else if (isAny(unit, "m", "min", "mins", "minute", "minutes")) {
+        } else if (isAny(unit, "min", "mins", "minute", "minutes")) {
             long ms = (long) (value * 60_000L);
             step.setDurationType(WktStepDuration.TIME);
             step.setDurationValue(ms);
@@ -186,13 +196,45 @@ public class EncodeYamlWorkout {
             step.setDurationType(WktStepDuration.DISTANCE);
             step.setDurationValue(cm);
         } else if ("m".equals(unit)) {
-            long cm = (long) (value * 100.0);
+            long cm = (long) (value * 100.0); // meters to centimeters
             step.setDurationType(WktStepDuration.DISTANCE);
             step.setDurationValue(cm);
+        } else if (isAny(unit, "cal", "calories")) {
+            long cal = (long) value;
+            step.setDurationType(WktStepDuration.CALORIES);
+            step.setDurationValue(cal);
+        } else if ("hr_greater_than".equals(unit)) {
+            long bpm = (long) value;
+            step.setDurationType(WktStepDuration.HR_GREATER_THAN);
+            step.setDurationValue(bpm);
+        } else if ("hr_less_than".equals(unit)) {
+            long bpm = (long) value;
+            step.setDurationType(WktStepDuration.HR_LESS_THAN);
+            step.setDurationValue(bpm);
         } else {
             throw new IllegalArgumentException("Unsupported duration unit: " + unit);
         }
     }
+
+    private static void applyStepNote(WorkoutStepMesg step, String note) {
+        // WorkoutStepMesg notes field length from profile (not explicitly stated here) - we defensively truncate to 50 chars preview
+        String trimmed = note;
+        int maxPreview = 50;
+        boolean truncated = false;
+        if (trimmed.length() > maxPreview) {
+            trimmed = trimmed.substring(0, maxPreview - 3) + "...";
+            truncated = true;
+        }
+        step.setNotes(trimmed);
+        if (truncated || !trimmed.equals(note)) {
+            // Emit memo_glob for full note. We'll attach later after we create all steps; so stash full note temporarily
+            // Use a custom attribute via step name hack not ideal; instead we maintain a side map (global). Simpler: store full note in a static map keyed by messageIndex
+            pendingStepNotes.put(step.getMessageIndex(), note);
+        }
+    }
+
+    // Store full notes for steps needing memo_glob extension
+    private static final Map<Integer, String> pendingStepNotes = new HashMap<>();
 
     private static void applyTarget(Map<String, Object> target, WorkoutStepMesg step, WorkoutBuildContext ctx) {
         if (target == null) {
@@ -354,6 +396,17 @@ public class EncodeYamlWorkout {
             for (WorkoutStepMesg s : steps) {
                 encoder.write(s);
             }
+            // Extended step notes via memo_glob (after steps so parent indices exist)
+            if (!pendingStepNotes.isEmpty()) {
+                for (Map.Entry<Integer, String> e : pendingStepNotes.entrySet()) {
+                    int parentIdx = e.getKey();
+                    String full = e.getValue();
+                    List<MemoGlobMesg> ng = buildMemoGlobsForText(full, WorkoutStepMesg.NotesFieldNum,
+                            MesgNum.WORKOUT_STEP, parentIdx);
+                    for (MemoGlobMesg mg : ng) encoder.write(mg);
+                }
+                pendingStepNotes.clear();
+            }
             encoder.close();
             System.out.println("Wrote " + filename);
         } catch (Exception e) {
@@ -385,6 +438,11 @@ public class EncodeYamlWorkout {
             part++;
         }
         return out;
+    }
+
+    private static List<MemoGlobMesg> buildMemoGlobsForText(String text, int fieldNum, int mesgNum, int parentIndex) {
+        if (text == null || text.isEmpty()) return Collections.emptyList();
+        return buildMemoGlobsForDescription(text.getBytes(StandardCharsets.UTF_8), fieldNum, mesgNum, parentIndex);
     }
 
     private static int adjustChunkForUtf8(byte[] bytes, int offset, int proposed) {
@@ -460,18 +518,27 @@ public class EncodeYamlWorkout {
     private static Intensity parseIntensity(String raw) {
         if (raw == null)
             return Intensity.ACTIVE;
-        switch (raw.toLowerCase()) {
-            case "warmup":
-                return Intensity.WARMUP;
-            case "active":
-                return Intensity.ACTIVE;
-            case "rest":
-                return Intensity.REST;
-            case "cooldown":
-                return Intensity.COOLDOWN;
-            default:
-                return Intensity.ACTIVE;
+        String r = raw.toLowerCase();
+        switch (r) {
+            case "warmup": return Intensity.WARMUP;
+            case "active": return Intensity.ACTIVE;
+            case "rest": return Intensity.REST;
+            case "cooldown": return Intensity.COOLDOWN;
+            case "interval":
+            case "repetition":
+                // Some profiles export a distinct code (often 4) for interval-like steps
+                try { return Intensity.valueOf("INTERVAL"); } catch (Exception ignore) { /* fallback below */ }
+                break;
         }
+        // Numeric fallback (allow specifying raw enum ordinal as string)
+        if (r.matches("\\d+")) {
+            try {
+                int ordinal = Integer.parseInt(r);
+                Intensity[] vals = Intensity.values();
+                if (ordinal >= 0 && ordinal < vals.length) return vals[ordinal];
+            } catch (NumberFormatException ignored) {}
+        }
+        return Intensity.ACTIVE;
     }
 
     private static int paceToSpeed(String pace) {
