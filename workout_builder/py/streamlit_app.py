@@ -103,7 +103,7 @@ st.title("🏃 Workout Builder & FIT Generator")
 
 # Simplified UI (no advanced model/HR/structured controls)
 st.caption(
-    "Enter a description. The app uses a fixed model and settings under the hood."
+    "Enter a the description of the workout you want to generate. The app uses `gemma-3-27b-it` under the hood to build a structured workout definition, encodes it to FIT, and lets you download the file for your Garmin device."
 )
 
 prompt = st.text_area(
@@ -127,7 +127,9 @@ if generate_btn:
     else:
         with st.spinner("Generating workout..."):
             try:
-                workout_def = generate_workout(prompt,model="google-gla:gemma-3-27b-it")
+                workout_def = generate_workout(
+                    prompt, model="google-gla:gemma-3-27b-it"
+                )
                 st.session_state.workout_def = workout_def
                 tmp_dir = Path(tempfile.mkdtemp(prefix="workout_fit_"))
                 yaml_path = tmp_dir / "workout.yaml"
@@ -260,68 +262,3 @@ if workout_def:
         indent=2,
     )
     st.code(yaml_bottom, language="yaml")
-
-st.markdown("---")
-with st.expander("How to Use & Device Transfer"):
-    st.markdown(
-        """
-        ### 1. Run the App
-        Launch the app (already packaged for you). No other CLI interaction is required.
-
-        ### 2. Generate a Workout
-        1. Enter a natural language prompt (e.g. *10min warmup, 6x1km @4:00-4:05/km w/90s rest, 10min cooldown*).
-        2. Click **Generate Workout**.
-        3. Review the Expanded Steps table (repeat groups are expanded here for clarity).
-        4. Download the FIT file via the **Download FIT File** button.
-
-        ### 3. Regenerating / Iterating
-        - Change the prompt and click **Generate Workout** again; the previous result is replaced.
-        - There is no manual YAML editing in this simplified mode; everything is handled internally.
-
-        ### 4. Optional: Validate FIT File
-        The Garmin `FitTestTool` often flags structured workouts with informational messages that are safe to ignore, but you can still inspect or decode:
-        ```bash
-        # Decode to CSV
-        java -jar workout_builder/java/lib/FitCSVTool.jar -b Your_Workout.fit
-
-        # (Optional) Run test tool (may produce non-fatal warnings)
-        java -jar workout_builder/java/lib/FitTestTool.jar Your_Workout.fit
-        ```
-        Inspect the CSV for step ordering, duration types, targets, and repeat controller steps.
-
-        ### 5. Copy FIT to Your Garmin Device (USB)
-        1. Connect device via USB; it mounts like a drive (on macOS usually under `/Volumes/GARMIN`).
-        2. Prefer target directory (device dependent):
-           - `GARMIN/Workouts/` (many devices auto-import on unplug)
-           - or `GARMIN/NEWFILES/` (device will move & ingest next boot)
-        3. Copy the downloaded `.fit` file into one of those directories.
-        4. Properly eject the volume.
-        5. On the watch, open the Workouts / Training menu; your custom workout should appear under the given name.
-
-        If the workout does not appear:
-        - Ensure file extension is `.fit` (not duplicated like `.fit.fit`).
-        - Remove special characters from the name (this app already sanitizes to alphanumeric + `_` / `-`).
-        - Reboot the device.
-
-    ### 6. Heart Rate Handling
-    Heart rate threshold semantics are handled automatically. No manual offset configuration is exposed in this interface.
-
-        ### 7. Troubleshooting
-        | Issue | Suggestion |
-        |-------|-----------|
-        | FIT download button missing | Generation may have failed—check error message above. |
-        | Device ignores file | Try placing into `NEWFILES`; verify file size > 0; decode with FitCSVTool to confirm validity. |
-        | Pace ranges look odd | Remember internal representation is speed (m/s * 1000). Display here converts back to min/km. |
-        | Repeats compressed on device | That is expected—device shows controller repeat, while the table here shows expanded steps. |
-
-        ### 8. Advanced CLI (Disabled in Simplified Mode)
-        Direct YAML editing & re-encoding are not part of this streamlined interface. Use the full developer version if you need that workflow.
-        """
-    )
-with st.expander("Notes & Tips"):
-    st.markdown(
-        "- Optional targets/durations omitted become open.\n"
-        "- Distance step durations are internally centimeters (FIT uses cm).\n"
-        "- Pace conversion uses scaled speed integers (m/s * 1000).\n"
-        "- Repeat groups appear as controller steps unless expanded."
-    )
