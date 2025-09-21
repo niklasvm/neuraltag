@@ -1,0 +1,31 @@
+version: 1
+metadata:
+  name: 800m Repeats
+  sport: running
+options:
+  hr_offset_mode: add_100
+  default_intensity: active
+  repeat_mode_default: controller
+steps:
+  - type: simple
+    duration:
+      value: 15
+      unit: min
+    intensity: warmup
+  - type: group
+    repeat: 8
+    children:
+      - type: simple
+        duration:
+          value: 800
+          unit: m
+        target:
+          type: pace
+          value: "3:30"
+          unit: min_per_km
+    intensity: active
+  - type: simple
+    duration:
+      value: 15
+      unit: min
+    intensity: cooldown

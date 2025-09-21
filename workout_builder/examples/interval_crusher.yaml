@@ -1,0 +1,72 @@
+version: 1
+metadata:
+    name: Interval Crusher
+    description: A challenging workout designed to boost your speed and endurance
+        with a mix of intense intervals and sustained efforts.
+    sport: running
+options:
+    hr_offset_mode: add_100
+    default_intensity: active
+    repeat_mode_default: controller
+steps:
+-   name: Warmup
+    intensity: warmup
+    type: simple
+    duration:
+        value: 5.0
+        unit: minutes
+        open: false
+-   name: 30s On / 30s Off Intervals
+    type: group
+    repeat: 5
+    children:
+    -   name: 30s @ 4:20 Pace
+        type: simple
+        duration:
+            value: 30.0
+            unit: seconds
+            open: false
+        target:
+            type: pace
+            value: '4:20'
+            unit: min_per_km
+    -   name: 30s Rest
+        intensity: rest
+        type: simple
+        duration:
+            value: 30.0
+            unit: seconds
+            open: false
+-   name: 1km Speed Bursts
+    type: group
+    repeat: 6
+    children:
+    -   name: 1km @ 3:45-3:50 Pace
+        type: simple
+        duration:
+            value: 1.0
+            unit: km
+            open: false
+        target:
+            type: pace_range
+            low: '3:45'
+            high: '3:50'
+            unit: min_per_km
+    -   name: 1 min Rest
+        intensity: rest
+        type: simple
+        duration:
+            value: 1.0
+            unit: minutes
+            open: false
+-   name: Cooldown
+    intensity: cooldown
+    type: simple
+    duration:
+        value: 15.0
+        unit: minutes
+        open: false
+    target:
+        type: pace
+        value: '6:00'
+        unit: min_per_km
