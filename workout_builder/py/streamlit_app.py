@@ -14,6 +14,9 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
+# model="google-gla:gemma-3-27b-it"
+model="google-gla:gemini-2.5-flash-lite"
+
 # Initialize header logger
 logger = HeaderLogger("workout_headers.jsonl")
 
@@ -128,7 +131,7 @@ st.title("🏃 Workout Builder & FIT Generator")
 
 # Simplified UI (no advanced model/HR/structured controls)
 st.caption(
-    "Enter a the description of the workout you want to generate. The app uses `gemma-3-27b-it` under the hood to build a structured workout definition, encodes it to FIT, and lets you download the file for your Garmin device."
+    f"Enter a the description of the workout you want to generate. The app uses `{model}` under the hood to build a structured workout definition, encodes it to FIT, and lets you download the file for your Garmin device."
 )
 
 workout_name = st.text_input(
@@ -180,7 +183,8 @@ if generate_btn:
                 })
                 
                 workout_def = generate_workout(
-                    prompt, workout_name=workout_name, model="google-gla:gemma-3-27b-it"
+                    prompt, workout_name=workout_name,
+                    model=model,
                 )
                 
                 logger.log_event('generation_success', {
