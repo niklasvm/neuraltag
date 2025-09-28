@@ -122,7 +122,7 @@ def encode_to_fit(yaml_file: str, fit_file: str):
     shutil.move(produced_filename, fit_file)
 
 
-st.set_page_config(page_title="Workout Builder", layout="wide")
+st.set_page_config(page_title="Workout Builder", layout="wide",page_icon="src/app/static/images/favicon.ico")
 
 st.title("🏃 Workout Builder & FIT Generator")
 
