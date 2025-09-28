@@ -7,10 +7,20 @@ import streamlit as st
 import pandas as pd
 import re
 from workout_builder.py.workout_definition import WorkoutDefinition
+from workout_builder.py.header_logger import HeaderLogger
 from pydantic_ai import Agent
 from dotenv import load_dotenv
 
+
 load_dotenv(override=True)
+
+# Initialize header logger
+logger = HeaderLogger("workout_headers.jsonl")
+
+# Log page visit on first load
+if 'page_visited' not in st.session_state:
+    logger.log_event('page_visit')
+    st.session_state.page_visited = True
 
 # ---------------- Helper logic (inlined from notebook) ---------------- #
 
@@ -133,6 +143,15 @@ prompt = st.text_area(
     placeholder="Describe the workout (e.g. 10min warmup, 6x1km @4:00-4:05/km w/90s rest, 10min cooldown)",
 )
 
+# Log input changes (simple detection)
+if workout_name and workout_name != st.session_state.get('prev_workout_name', ''):
+    logger.log_event('input_change', {'field': 'workout_name', 'has_value': bool(workout_name.strip())})
+    st.session_state.prev_workout_name = workout_name
+
+if prompt and prompt != st.session_state.get('prev_prompt', ''):
+    logger.log_event('input_change', {'field': 'workout_prompt', 'char_count': len(prompt)})
+    st.session_state.prev_prompt = prompt
+
 generate_btn = st.button("Generate Workout", type="primary")
 
 if "workout_def" not in st.session_state:
@@ -143,16 +162,32 @@ if "fit_filename" not in st.session_state:
     st.session_state.fit_filename = None
 
 if generate_btn:
+    logger.log_event('button_click', {'button': 'generate_workout'})
+    
     if not prompt.strip():
+        logger.log_event('validation_error', {'error': 'empty_prompt'})
         st.warning("Please enter a workout prompt first.")
     elif not workout_name.strip():
+        logger.log_event('validation_error', {'error': 'empty_workout_name'})
         st.warning("Please enter a workout name first.")
     else:
         with st.spinner("Generating workout..."):
             try:
+                logger.log_event('generation_start', {
+                    'workout_name': workout_name,
+                    'prompt_length': len(prompt),
+                    'model': "google-gla:gemma-3-27b-it"
+                })
+                
                 workout_def = generate_workout(
                     prompt, workout_name=workout_name, model="google-gla:gemma-3-27b-it"
                 )
+                
+                logger.log_event('generation_success', {
+                    'workout_name': workout_def.metadata.name,
+                    'steps_count': len(workout_def.steps) if hasattr(workout_def, 'steps') else 0
+                })
+                
                 st.session_state.workout_def = workout_def
                 tmp_dir = Path(tempfile.mkdtemp(prefix="workout_fit_"))
                 yaml_path = tmp_dir / "workout.yaml"
@@ -170,9 +205,19 @@ if generate_btn:
                     st.session_state.fit_filename = (
                         f"{_sanitize_name(workout_def.metadata.name)}.fit"
                     )
+                    
+                    logger.log_event('fit_generation_success', {
+                        'filename': st.session_state.fit_filename,
+                        'file_size': len(st.session_state.fit_bytes)
+                    })
+                    
                 finally:
                     shutil.rmtree(tmp_dir, ignore_errors=True)
             except Exception as e:
+                logger.log_event('generation_error', {
+                    'error_message': str(e),
+                    'error_type': type(e).__name__
+                })
                 st.error(f"Generation failed: {e}")
 
 workout_def = st.session_state.workout_def
@@ -182,12 +227,17 @@ if workout_def:
 
     # Download button directly under generation controls
     if st.session_state.fit_bytes:
-        st.download_button(
+        if st.download_button(
             "Download FIT File",
             data=st.session_state.fit_bytes,
             file_name=st.session_state.fit_filename or "workout.fit",
             mime="application/octet-stream",
-        )
+        ):
+            logger.log_event('fit_download', {
+                'filename': st.session_state.fit_filename,
+                'file_size': len(st.session_state.fit_bytes),
+                'workout_name': workout_def.metadata.name
+            })
     else:
         st.warning("FIT file not available.")
 
@@ -277,6 +327,11 @@ else:
 
 # Show YAML at absolute bottom if a workout exists
 if workout_def:
+    # Log YAML viewing (only once per session)
+    if 'yaml_viewed' not in st.session_state:
+        logger.log_event('yaml_viewed')
+        st.session_state.yaml_viewed = True
+    
     st.markdown("---")
     st.subheader("YAML Definition (Read-Only)")
     yaml_bottom = yaml.safe_dump(

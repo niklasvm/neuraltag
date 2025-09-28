@@ -1,0 +1,1 @@
+This project uses a virtual environment and uv for management. Always run python scripts with `uv run --frozen` to ensure the correct environment is used.
