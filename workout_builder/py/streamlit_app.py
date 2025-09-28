@@ -1,6 +1,7 @@
 import tempfile
 import shutil
 from pathlib import Path
+from typing import Optional
 import yaml
 import streamlit as st
 import pandas as pd
@@ -21,14 +22,19 @@ def _sanitize_name(n: str) -> str:
 
 def generate_workout(
     workout_description: str,
+    workout_name: Optional[str] = None,
     model: str = "google-gla:gemini-2.5-flash-lite",
     use_structured_output: bool = False,
 ) -> WorkoutDefinition:
     schema = WorkoutDefinition.model_json_schema()
 
-    system_prompt = """You are a helpful assistant that helps translate user requests into structured workout definitions.
-    Provide the workout a creative name and description. Steps should also be creatively named with appropriate descriptions and notes
-    If the user provides a name then use that name.
+    if workout_name:
+        name_instruction = f"Use the exact workout name: '{workout_name}'"
+    else:
+        name_instruction = "Provide the workout a creative name"
+
+    system_prompt = f"""You are a helpful assistant that helps translate user requests into structured workout definitions.
+    {name_instruction} and description. Steps should also be creatively named with appropriate descriptions and notes
     """
 
     if not use_structured_output:
@@ -58,15 +64,24 @@ def generate_workout(
             workout: WorkoutDefinition = WorkoutDefinition.model_validate_json(
                 json_text
             )
-        except:
+        except Exception:
             print("Failed to parse JSON, falling back to structured output")
             print(json_text)
+            # Fall back to structured output
+            agent = Agent(model=model, system_prompt=system_prompt)
+            prompt = f"""Help me generate a workout for: {workout_description}"""
+            result = agent.run_sync(prompt, output_type=WorkoutDefinition)
+            workout = result.output
     else:
         agent = Agent(model=model, system_prompt=system_prompt)
         prompt = f"""Help me generate a workout for: {workout_description}"""
         result = agent.run_sync(prompt, output_type=WorkoutDefinition)
 
         workout = result.output
+
+    # Override the workout name if one was provided by the user
+    if workout_name and workout_name.strip():
+        workout.metadata.name = workout_name.strip()
 
     print(f"💡 Created workout: {workout.metadata.name}")
     return workout
@@ -106,6 +121,12 @@ st.caption(
     "Enter a the description of the workout you want to generate. The app uses `gemma-3-27b-it` under the hood to build a structured workout definition, encodes it to FIT, and lets you download the file for your Garmin device."
 )
 
+workout_name = st.text_input(
+    "Workout Name",
+    placeholder="Enter a name for your workout (e.g. Speed Intervals, Long Run, etc.)",
+    help="This will be the name displayed on your Garmin device"
+)
+
 prompt = st.text_area(
     "Workout Prompt",
     height=200,
@@ -124,11 +145,13 @@ if "fit_filename" not in st.session_state:
 if generate_btn:
     if not prompt.strip():
         st.warning("Please enter a workout prompt first.")
+    elif not workout_name.strip():
+        st.warning("Please enter a workout name first.")
     else:
         with st.spinner("Generating workout..."):
             try:
                 workout_def = generate_workout(
-                    prompt, model="google-gla:gemma-3-27b-it"
+                    prompt, workout_name=workout_name, model="google-gla:gemma-3-27b-it"
                 )
                 st.session_state.workout_def = workout_def
                 tmp_dir = Path(tempfile.mkdtemp(prefix="workout_fit_"))
