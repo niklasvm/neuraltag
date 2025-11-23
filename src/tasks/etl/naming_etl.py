@@ -14,8 +14,26 @@ import logging
 
 from src.tasks.etl.naming_strategies.v1.naming_strategy_v1 import NamingStrategyV1
 from src.tasks.etl.naming_strategies.v2.naming_strategy_v2 import NamingStrategyV2
+from src.tasks.telegram import TelegramBot
 
 logger = logging.getLogger(__name__)
+
+
+def send_error_message_via_telegram(activity_id: int, e: Exception, settings: Settings):
+    error_message = str(e)
+    telegram_message = f"❗️ Error during naming ETL for activity {activity_id}:\n<code>{error_message}</code>"
+    tb = TelegramBot(
+        token=settings.telegram_bot_token,
+        chat_id=settings.telegram_chat_id,
+        parse_mode="HTML",
+    )
+    try:
+        tb.send_message(
+            message=telegram_message,
+        )
+        print()
+    except Exception as e:
+        logger.error(f"Failed to send telegram message: {e}")
 
 
 def run_name_activity_etl(
@@ -34,7 +52,13 @@ def run_name_activity_etl(
         temperature=temperature,
         naming_strategy_version=naming_strategy_version,
     )
-    return etl.run()
+
+    try:
+        result = etl.run()
+    except Exception as e:
+        send_error_message_via_telegram(activity_id, exception, settings)
+        raise e
+    return result
 
 
 class NameSuggestionETL(ETL):
@@ -132,7 +156,7 @@ class NameSuggestionETL(ETL):
             "map_centroid_lon",
             "map_area",
             "suffer_score",
-            "stream_data"
+            "stream_data",
         ]
 
         activities_df = activities_df[
@@ -164,7 +188,6 @@ class NameSuggestionETL(ETL):
         )
 
         name_results, prompt_response = naming_strategy.run()
-
 
         self.db.add_prompt_response(prompt_response)
 
