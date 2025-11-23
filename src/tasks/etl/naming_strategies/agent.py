@@ -47,10 +47,10 @@ def run_naming_agent(
     prompt_response = PromptResponse(
         activity_id=activity_id,
         prompt=rendered_prompt,
-        response=str(result.data),
+        response=str(result.output),
         llm_model=llm_model,
         temperature=temperature,
     )
 
     # parse response
-    return prompt_response, result.data
+    return prompt_response, result.output
