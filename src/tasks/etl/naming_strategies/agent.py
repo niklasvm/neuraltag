@@ -3,11 +3,11 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 from src.database.models import PromptResponse
-# from google import genai
 
 from pydantic_ai.models.fallback import FallbackModel
 from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
+from pydantic_ai.models.google import GoogleModel
 
 
 class NameResult(BaseModel):
@@ -22,16 +22,15 @@ def run_naming_agent(
     # ollama_model = OpenAIModel(
     #     model_name='deepseek-r1:latest', provider=OpenAIProvider(base_url='http://localhost:11434/v1')
     # )
-    fallback_model = FallbackModel(
-        "google-gla:gemini-2.5-flash",
-        "google-gla:gemini-2.0-flash",
-        "google-gla:gemini-1.5-pro",
-        "google-gla:gemini-1.5-flash",
+    fallback_models = FallbackModel(
+        GoogleModel("gemini-2.5-pro"),
+        GoogleModel("gemini-flash-latest"),
+        GoogleModel("gemini-2.0-flash"),
     )
     naming_agent = Agent(
-        fallback_model,
+        fallback_models,
         instrument=True,
-        retries=1,
+        retries=0,
         output_type=list[NameResult],
         model_settings=ModelSettings(
             temperature=temperature,
@@ -48,10 +47,10 @@ def run_naming_agent(
     prompt_response = PromptResponse(
         activity_id=activity_id,
         prompt=rendered_prompt,
-        response=str(result.data),
+        response=str(result.output),
         llm_model=llm_model,
         temperature=temperature,
     )
 
     # parse response
-    return prompt_response, result.data
+    return prompt_response, result.output
