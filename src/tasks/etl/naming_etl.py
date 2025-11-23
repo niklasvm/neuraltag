@@ -56,7 +56,7 @@ def run_name_activity_etl(
     try:
         result = etl.run()
     except Exception as e:
-        send_error_message_via_telegram(activity_id, exception, settings)
+        send_error_message_via_telegram(activity_id, e, settings)
         raise e
     return result
 
