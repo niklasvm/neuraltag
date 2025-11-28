@@ -46,13 +46,15 @@ def process_post_request(content: WebhookPostRequest, settings: Settings):
                     and content.updates.get("title") == "Rename"
                 ):
                     logger.info(f"Running name activity etl for activity {activity_id}")
-                    run_name_activity_etl(
+
+                    _, model_name = run_name_activity_etl(
                         activity_id=activity_id,
                         llm_model="google-gla:gemini-2.5-pro",
                         settings=settings,
                         days=365,
                         temperature=2.0,
                     )
+                    
                     logger.info(
                         f"Successfully ran name activity etl for activity {activity_id}"
                     )
@@ -61,6 +63,7 @@ def process_post_request(content: WebhookPostRequest, settings: Settings):
                     publish_new_activity_name(
                         activity_id=activity_id,
                         settings=settings,
+                        model_name=model_name,
                     )
                     logger.info(
                         f"Successfully ran rename workflow for activity {activity_id}"

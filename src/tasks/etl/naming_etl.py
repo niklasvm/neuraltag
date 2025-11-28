@@ -6,7 +6,7 @@ from typing import Literal
 import pandas as pd
 
 from src.app.config import Settings
-from src.database.models import NameSuggestion
+from src.database.models import NameSuggestion, PromptResponse
 from src.tasks.etl.base import ETL
 
 import logging
@@ -31,7 +31,6 @@ def send_error_message_via_telegram(activity_id: int, e: Exception, settings: Se
         tb.send_message(
             message=telegram_message,
         )
-        print()
     except Exception as e:
         logger.error(f"Failed to send telegram message: {e}")
 
@@ -43,7 +42,7 @@ def run_name_activity_etl(
     naming_strategy_version: str | None = None,
     days: int = 365,
     temperature: float = 2.0,
-):
+) -> tuple[list[NameSuggestion], PromptResponse, str]:
     etl = NameSuggestionETL(
         llm_model=llm_model,
         settings=settings,
@@ -187,7 +186,7 @@ class NameSuggestionETL(ETL):
             settings=self.settings,
         )
 
-        name_results, prompt_response = naming_strategy.run()
+        name_results, prompt_response, model_name = naming_strategy.run()
 
         self.db.add_prompt_response(prompt_response)
 
@@ -206,7 +205,7 @@ class NameSuggestionETL(ETL):
             self.db.add_name_suggestion(name_suggestion)
             name_suggestions.append(name_suggestion)
 
-        return name_suggestions
+        return name_suggestions, model_name
 
 
 # TODO: Remove as unused

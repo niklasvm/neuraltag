@@ -29,7 +29,7 @@ class BaseNamingStrategy(ABC):
         self.temperature = temperature
         self.settings = settings
 
-    def run(self) -> tuple[list[NameResult], PromptResponse]:
+    def run(self) -> tuple[list[NameResult], PromptResponse, str]:
         self._preprocess_data()
 
         input = self.data[self.data["id"] == self.activity_id].iloc[0]
@@ -42,14 +42,14 @@ class BaseNamingStrategy(ABC):
         del context_data["id"]
         rendered_prompt = self._create_prompt(input, context_data)
 
-        prompt_response, results = run_naming_agent(
+        prompt_response, results, model_name = run_naming_agent(
             activity_id=self.activity_id,
             llm_model=self.llm_model,
             rendered_prompt=rendered_prompt,
             temperature=self.temperature,
         )
 
-        return results, prompt_response
+        return results, prompt_response, model_name
 
     def _preprocess_data(self):
         """Preprocess the data before creating the prompt."""
