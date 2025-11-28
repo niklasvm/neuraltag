@@ -23,7 +23,7 @@ def run_naming_agent(
     #     model_name='deepseek-r1:latest', provider=OpenAIProvider(base_url='http://localhost:11434/v1')
     # )
     fallback_models = FallbackModel(
-        # GoogleModel("gemini-2.5-pro"),
+        GoogleModel("gemini-2.5-pro"),
         GoogleModel("gemini-flash-latest"),
         GoogleModel("gemini-2.5-flash"),
         GoogleModel("gemini-2.0-flash"),
