@@ -21,10 +21,11 @@ PUBLISH_TELEGRAM_NOTIFICATION_TEMPLATE = """
 <b>Name:</b> {name}
 <b>Description:</b> {description}
 <b>Probability:</b> {probability:.0f}%
+<b>Model:</b> {model_name}
 """.strip()
 
 
-def publish_new_activity_name(activity_id: int, settings: Settings):
+def publish_new_activity_name(activity_id: int, settings: Settings, model_name: str):
     db = Database(
         settings.postgres_connection_string,
         encryption_key=settings.encryption_key,
@@ -87,6 +88,7 @@ def publish_new_activity_name(activity_id: int, settings: Settings):
         name=new_name,
         description=suggestion_description,
         probability=new_probability * 100,
+        model_name=model_name,
     )
 
     tb = TelegramBot(

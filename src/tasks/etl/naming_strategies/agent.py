@@ -18,14 +18,16 @@ class NameResult(BaseModel):
 
 def run_naming_agent(
     *, activity_id: int, rendered_prompt: str, temperature: float, llm_model: str
-) -> tuple[PromptResponse, list[NameResult]]:
+) -> tuple[PromptResponse, list[NameResult], str]:
     # ollama_model = OpenAIModel(
     #     model_name='deepseek-r1:latest', provider=OpenAIProvider(base_url='http://localhost:11434/v1')
     # )
     fallback_models = FallbackModel(
-        GoogleModel("gemini-2.5-pro"),
+        # GoogleModel("gemini-2.5-pro"),
         GoogleModel("gemini-flash-latest"),
+        GoogleModel("gemini-2.5-flash"),
         GoogleModel("gemini-2.0-flash"),
+        GoogleModel("gemini-2.0-flash-lite")
     )
     naming_agent = Agent(
         fallback_models,
@@ -52,5 +54,10 @@ def run_naming_agent(
         temperature=temperature,
     )
 
+    try:
+        model_name = str(result.response.model_name)
+    except Exception:
+        model_name = "unknown"
+
     # parse response
-    return prompt_response, result.output
+    return prompt_response, result.output, model_name
