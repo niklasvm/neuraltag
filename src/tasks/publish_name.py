@@ -8,6 +8,7 @@ from src.tasks.strava import get_strava_client
 from src.tasks.telegram import TelegramBot
 
 NEURALTAG_SIGNATURE = "named with NeuralTag 🤖"
+NEURALTAG_SIGNATURE_NEW = "named with NeuralTag 🤖\n🌐 neuraltag.ddns.net"
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ def publish_new_activity_name(activity_id: int, settings: Settings, model_name: 
         existing_description = ""
     if NEURALTAG_SIGNATURE not in str(existing_description):
         updated_activity_description = (
-            f"{existing_description}\n\n{NEURALTAG_SIGNATURE}".strip()
+            f"{existing_description}\n\n{NEURALTAG_SIGNATURE_NEW}".strip()
         )
     else:
         updated_activity_description = existing_description
@@ -115,4 +116,4 @@ if __name__ == "__main__":
     )
     # Example usage
 
-    publish_new_activity_name(activity_id=14570364200, settings=settings)
+    publish_new_activity_name(activity_id=16785683348, settings=settings, model_name="google-gla:gemini-2.5-pro")
